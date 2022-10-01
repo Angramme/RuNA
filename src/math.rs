@@ -23,11 +23,11 @@ impl MetricSpace for StrMetricSpace {
     fn sub(a: char, b: char) -> u64 { if a == b {0} else {1} }
 }
 
-// fn dist_naif<M, I>(x: &I, y: &I) -> M::Cost
-// where M: MetricSpace, I: IntoIterator<Item = M::Item>
-// {
-//     dist_naif_rec::<M, _>(x.into_iter(), y.into_iter(), M::nocost, None)
-// }
+fn dist_naif<M, I>(x: I, y: I) -> M::Cost
+where M: MetricSpace, I: Iterator<Item = M::Item>
+{
+    dist_naif_rec::<M, _>(x, y, M::nocost, None)
+}
 
 fn dist_naif_rec<T, I>(mut xi: I, mut yi: I, c: T::Cost, dist: Option<T::Cost>) -> T::Cost
 where T: MetricSpace, I: Iterator<Item = T::Item>,
@@ -45,14 +45,14 @@ mod tests {
     use crate::math::StrMetricSpace;
 
     #[test]
-    fn dist_naif_rec() {
+    fn dist_naif() {
         let test_results = &[
             ("abc", "abc", 0),
             ("abc", "abs", 1),
         ];
 
         for (x ,y, result) in test_results {
-            assert_eq!(super::dist_naif_rec::<StrMetricSpace, _>(x.chars(), y.chars(), 0, None), *result);
+            assert_eq!(super::dist_naif::<StrMetricSpace, _>(x.chars(), y.chars()), *result);
         }
     }
 }
