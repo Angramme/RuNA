@@ -1,7 +1,8 @@
-#![allow(dead_code)]
-// use std::str::Chars;
+//! The Math crate of the project
 
-trait MetricSpace {
+#![allow(dead_code)]
+
+pub trait MetricSpace {
     type Item;
     type Cost: Ord + std::ops::Add<Output = Self::Cost>;
 
@@ -11,13 +12,15 @@ trait MetricSpace {
     fn sub(a: &Self::Item, b: &Self::Item) -> Self::Cost;
 }
 
-fn dist_naif<M, I>(x: I, y: I) -> M::Cost
-where M: MetricSpace, I: IntoIterator<Item = M::Item>
+/// Calculate distance between sequences x and y in the MetricSpace M
+pub fn dist_naif<M, I>(x: I, y: I) -> M::Cost
+where M: MetricSpace, I: Iterator<Item = M::Item>
 {
-    dist_naif_rec::<M, _>(x.into_iter(), y.into_iter(), M::NOCOST, None)
+    // dist_naif_rec::<M, _>(x.into_iter(), y.into_iter(), M::NOCOST, None)
+    dist_naif_rec::<M, _>(x, y, M::NOCOST, None)
 }
 
-fn dist_naif_rec<T, I>(mut xi: I, mut yi: I, c: T::Cost, dist: Option<T::Cost>) -> T::Cost
+pub fn dist_naif_rec<T, I>(mut xi: I, mut yi: I, c: T::Cost, dist: Option<T::Cost>) -> T::Cost
 where T: MetricSpace, I: Iterator<Item = T::Item>
 {
     match (xi.next(), yi.next()) {
