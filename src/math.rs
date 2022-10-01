@@ -5,44 +5,41 @@ trait MetricSpace {
     type Item;
     type Cost: Ord + std::ops::Add<Output = Self::Cost>;
 
-    const nocost: Self::Cost;
-    const del: Self::Cost;
-    const ins: Self::Cost;
-    fn sub(a: Self::Item, b: Self::Item) -> Self::Cost;
-}
-
-struct StrMetricSpace;
-
-impl MetricSpace for StrMetricSpace {
-    type Item = char;
-    type Cost = u64;
-
-    const nocost: u64 = 0;
-    const del: u64 = 1;
-    const ins: u64 = 1;
-    fn sub(a: char, b: char) -> u64 { if a == b {0} else {1} }
+    const NOCOST: Self::Cost;
+    const DEL: Self::Cost;
+    const INS: Self::Cost;
+    fn sub(a: &Self::Item, b: &Self::Item) -> Self::Cost;
 }
 
 fn dist_naif<M, I>(x: I, y: I) -> M::Cost
-where M: MetricSpace, I: Iterator<Item = M::Item>
+where M: MetricSpace, I: IntoIterator<Item = M::Item>
 {
-    dist_naif_rec::<M, _>(x, y, M::nocost, None)
+    dist_naif_rec::<M, _>(x.into_iter(), y.into_iter(), M::NOCOST, None)
 }
 
 fn dist_naif_rec<T, I>(mut xi: I, mut yi: I, c: T::Cost, dist: Option<T::Cost>) -> T::Cost
-where T: MetricSpace, I: Iterator<Item = T::Item>,
+where T: MetricSpace, I: Iterator<Item = T::Item>
 {
     match (xi.next(), yi.next()) {
         (None, None) => match dist { Some(dist) => c.min(dist), None => c },
-        (Some(xj), Some(yj)) => dist_naif_rec::<T, I>(xi, yi, c + T::sub(xj, yj), dist),
-        (Some(_), None) => dist_naif_rec::<T, I>(xi, yi, c + T::del, dist),
-        (None, Some(_)) => dist_naif_rec::<T, I>(xi, yi, c + T::ins, dist),
+        (Some(xj), Some(yj)) => dist_naif_rec::<T, I>(xi, yi, c + T::sub(&xj, &yj), dist),
+        (Some(_), None) => dist_naif_rec::<T, I>(xi, yi, c + T::DEL, dist),
+        (None, Some(_)) => dist_naif_rec::<T, I>(xi, yi, c + T::INS, dist),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::math::StrMetricSpace;
+    struct StrMetricSpace;
+    impl crate::math::MetricSpace for StrMetricSpace {
+        type Item = char;
+        type Cost = u64;
+
+        const NOCOST: u64 = 0;
+        const DEL: u64 = 1;
+        const INS: u64 = 1;
+        fn sub(a: &char, b: &char) -> u64 { if a == b {0} else {1} }
+    }
 
     #[test]
     fn dist_naif() {
