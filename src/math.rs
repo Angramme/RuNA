@@ -1,7 +1,5 @@
 //! The Math crate of the project
 
-#![allow(dead_code)]
-
 pub trait MetricSpace {
     type Item;
     type Cost: Ord + std::ops::Add<Output = Self::Cost>;
@@ -9,14 +7,13 @@ pub trait MetricSpace {
     const NOCOST: Self::Cost;
     const DEL: Self::Cost;
     const INS: Self::Cost;
-    fn sub(a: &Self::Item, b: &Self::Item) -> Self::Cost;
+    fn sub(a: Self::Item, b: Self::Item) -> Self::Cost;
 }
 
 /// Calculate distance between sequences x and y in the MetricSpace M
 pub fn dist_naif<M, I>(x: I, y: I) -> M::Cost
 where M: MetricSpace, I: Iterator<Item = M::Item>
 {
-    // dist_naif_rec::<M, _>(x.into_iter(), y.into_iter(), M::NOCOST, None)
     dist_naif_rec::<M, _>(x, y, M::NOCOST, None)
 }
 
@@ -25,7 +22,7 @@ where T: MetricSpace, I: Iterator<Item = T::Item>
 {
     match (xi.next(), yi.next()) {
         (None, None) => match dist { Some(dist) => c.min(dist), None => c },
-        (Some(xj), Some(yj)) => dist_naif_rec::<T, I>(xi, yi, c + T::sub(&xj, &yj), dist),
+        (Some(xj), Some(yj)) => dist_naif_rec::<T, I>(xi, yi, c + T::sub(xj, yj), dist),
         (Some(_), None) => dist_naif_rec::<T, I>(xi, yi, c + T::DEL, dist),
         (None, Some(_)) => dist_naif_rec::<T, I>(xi, yi, c + T::INS, dist),
     }
@@ -41,7 +38,7 @@ mod tests {
         const NOCOST: u64 = 0;
         const DEL: u64 = 1;
         const INS: u64 = 1;
-        fn sub(a: &char, b: &char) -> u64 { if a == b {0} else {1} }
+        fn sub(a: char, b: char) -> u64 { if a == b {0} else {1} }
     }
 
     #[test]
@@ -52,7 +49,9 @@ mod tests {
         ];
 
         for (x ,y, result) in test_results {
-            assert_eq!(super::dist_naif::<StrMetricSpace, _>(x.chars(), y.chars()), *result);
+            let v = super::dist_naif::<StrMetricSpace, _>(x.chars(), y.chars());
+            assert_eq!(v, *result, "dist_naif::<StrMetricSpace, _>(\"{}\".chars(), \"{}\".chars()) = {} is not equal to the expected {}!", 
+                x, y, v, *result);
         }
     }
 }
