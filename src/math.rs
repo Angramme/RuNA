@@ -57,9 +57,6 @@ mod tests {
         }
     }
 
-//     Inst_0000010_44.adn,
-// Inst_0000010_7.adn et Inst_0000010_8.adn qui ont pour distance d’édition 10, 8 et 2.
-
     #[test]
     fn dist_naif_dna(){
         let block1 = DnaBlocks::from_path("./tests/Instances_genome/Inst_0000010_44.adn").expect("cannot read file");

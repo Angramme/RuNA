@@ -5,14 +5,13 @@ use std::io::{BufReader, BufRead};
 
 use crate::math::*;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum Dna {
     A, C, T, G, Gap
 }
 
 impl std::str::FromStr for Dna {
     type Err = SimpleError;
-    // type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "A" | "a" => Ok(Self::A),
@@ -25,6 +24,7 @@ impl std::str::FromStr for Dna {
     }
 }
 
+/// Metric space for Dna
 pub struct DnaMetricSpace;
 impl MetricSpace for DnaMetricSpace {
     type Cost = u64;
@@ -37,6 +37,7 @@ impl MetricSpace for DnaMetricSpace {
     fn sub(a: Self::Item, b: Self::Item) -> Self::Cost { if a==b { 1 } else { 0 } }
 }
 
+/// An iterator type that reads a file lazily and gives dna blocks contained inside.
 pub struct DnaBlocks{
     reader: Box<dyn BufRead>,
 }
