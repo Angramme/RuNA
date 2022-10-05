@@ -30,6 +30,8 @@ where T: MetricSpace, I: Iterator<Item = T::Item>
 
 #[cfg(test)]
 mod tests {
+    use crate::dna::{DnaBlocks, DnaMetricSpace};
+
     struct StrMetricSpace;
     impl crate::math::MetricSpace for StrMetricSpace {
         type Item = char;
@@ -52,6 +54,25 @@ mod tests {
             let v = super::dist_naif::<StrMetricSpace, _>(x.chars(), y.chars());
             assert_eq!(v, *result, "dist_naif::<StrMetricSpace, _>(\"{}\".chars(), \"{}\".chars()) = {} is not equal to the expected {}!", 
                 x, y, v, *result);
+        }
+    }
+
+//     Inst_0000010_44.adn,
+// Inst_0000010_7.adn et Inst_0000010_8.adn qui ont pour distance d’édition 10, 8 et 2.
+
+    #[test]
+    fn dist_naif_dna(){
+        let block1 = DnaBlocks::from_path("./tests/Instances_genome/Inst_0000010_44.adn").expect("cannot read file");
+        let block2 = DnaBlocks::from_path("./tests/Instances_genome/Inst_0000010_7.adn").expect("cannot read file");
+        let block3 = DnaBlocks::from_path("./tests/Instances_genome/Inst_0000010_8.adn").expect("cannot read file");
+        let blocks = block1.chain(block2).chain(block3);
+
+        let testcases = blocks.zip([10, 8, 2].iter());
+
+        for (inp, result) in testcases {
+            let (l, r) = inp.expect("error reading input!");
+            let d = super::dist_naif::<DnaMetricSpace, _>(l.into_iter(), r.into_iter());
+            assert_eq!(d, *result, "result is not good :(");
         }
     }
 }
