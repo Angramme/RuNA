@@ -72,34 +72,33 @@ impl Iterator for DnaBlocks {
         if buf.is_empty() {
             None
         } else {
-            Some(read_double_dna_block(buf.chars()))
+            Some(read_double_dna_block(buf.as_str()))
         }
     }
 }
 
-fn read_double_dna_block(mut ite: std::str::Chars) -> Result<(Vec<Dna>, Vec<Dna>), Box<dyn Error>>
-{
-    let read_line = |ite: &mut std::str::Chars| {
-        ite
-        .skip_while(|x| { x.is_whitespace() })
-        .take_while(|&x| { x != '\n' })
-        .collect::<String>()
-    };
+fn read_double_dna_block(ite: &str) -> Result<(Vec<Dna>, Vec<Dna>), Box<dyn Error>>
+{ // TODO: replace with cleaner code
+    let mut ls = ite.lines();
 
-    let n = read_line(ite.by_ref()).parse::<usize>()?;
-    let m = read_line(ite.by_ref()).parse::<usize>()?;
+    let n = (if let Some(t) = ls.next() { t.parse::<usize>() } else { bail!("couldn't read line containing n!") })?;
+    let m = (if let Some(t) = ls.next() { t.parse::<usize>() } else { bail!("couldn't read line containing m!") })?;
+    
     let mut xs = Vec::new();
-    for s in 
-        read_line(ite.by_ref())
-        .split_ascii_whitespace() {
+    match ls.next() {
+        Some(t) => for s in t.split_ascii_whitespace(){
             xs.push(s.parse::<Dna>()?);
-        }
+        },
+        None => bail!("couldn't read line containing n!"),
+    }
+
     let mut ys = Vec::new();
-    for s in 
-        read_line(ite.by_ref())
-        .split_ascii_whitespace() {
+    match ls.next() {
+        Some(t) => for s in t.split_ascii_whitespace(){
             ys.push(s.parse::<Dna>()?);
-        }
+        },
+        None => bail!("couldn't read line containing n!"),
+    }
     
     if xs.len() != n { bail!(format!("size mismatch between the number of DNA letters {} and the length provided! {}", xs.len(), n)); }
     if ys.len() != m { bail!(format!("size mismatch between the number of DNA letters {} and the length provided! {}", ys.len(), m)); }
