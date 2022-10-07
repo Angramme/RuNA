@@ -89,7 +89,7 @@ fn read_double_dna_block(ite: &str) -> Result<(Vec<Dna>, Vec<Dna>), Box<dyn Erro
         Some(t) => for s in t.split_ascii_whitespace(){
             xs.push(s.parse::<Dna>()?);
         },
-        None => bail!("couldn't read line containing n!"),
+        None => bail!("couldn't read line containing xs!"),
     }
 
     let mut ys = Vec::new();
@@ -97,7 +97,7 @@ fn read_double_dna_block(ite: &str) -> Result<(Vec<Dna>, Vec<Dna>), Box<dyn Erro
         Some(t) => for s in t.split_ascii_whitespace(){
             ys.push(s.parse::<Dna>()?);
         },
-        None => bail!("couldn't read line containing n!"),
+        None => bail!("couldn't read line containing ys!"),
     }
     
     if xs.len() != n { bail!(format!("size mismatch between the number of DNA letters {} and the length provided! {}", xs.len(), n)); }
