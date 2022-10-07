@@ -84,7 +84,7 @@ fn read_double_dna_block(ite: &str) -> Result<(Vec<Dna>, Vec<Dna>), Box<dyn Erro
     let n = (if let Some(t) = ls.next() { t.parse::<usize>() } else { bail!("couldn't read line containing n!") })?;
     let m = (if let Some(t) = ls.next() { t.parse::<usize>() } else { bail!("couldn't read line containing m!") })?;
     
-    let mut xs = Vec::new();
+    let mut xs = Vec::with_capacity(n);
     match ls.next() {
         Some(t) => for s in t.split_ascii_whitespace(){
             xs.push(s.parse::<Dna>()?);
@@ -92,7 +92,7 @@ fn read_double_dna_block(ite: &str) -> Result<(Vec<Dna>, Vec<Dna>), Box<dyn Erro
         None => bail!("couldn't read line containing xs!"),
     }
 
-    let mut ys = Vec::new();
+    let mut ys = Vec::with_capacity(m);
     match ls.next() {
         Some(t) => for s in t.split_ascii_whitespace(){
             ys.push(s.parse::<Dna>()?);
