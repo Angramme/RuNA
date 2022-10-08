@@ -5,7 +5,7 @@ use std::io::{BufReader, BufRead};
 
 use crate::math::*;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Dna {
     A, C, T, G, Gap
 }
@@ -30,11 +30,18 @@ impl MetricSpace for DnaMetricSpace {
     type Cost = u64;
     type Item = Dna; 
 
-    const DEL: Self::Cost = 1;
-    const INS: Self::Cost = 1;
+    const DEL: Self::Cost = 2;
+    const INS: Self::Cost = 2;
     const NOCOST: Self::Cost = 0;
 
-    fn sub(a: Self::Item, b: Self::Item) -> Self::Cost { if a==b { 1 } else { 0 } }
+    fn sub(a: Self::Item, b: Self::Item) -> Self::Cost { 
+        use Dna as D;
+        match (a, b) {
+            (x, y) if x == y => 0,
+            (D::A, D::T) | (D::G, D::C) | (D::T, D::A) | (D::C, D::G) => 3,
+            (_, _) => 4
+        } 
+    }
 }
 
 /// An iterator type that reads a file lazily and gives dna blocks contained inside.
