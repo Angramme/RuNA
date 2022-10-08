@@ -1,8 +1,8 @@
 //! The Math crate of the project
 
 pub trait MetricSpace {
-    type Item;
-    type Cost: Ord + std::ops::Add<Output = Self::Cost>;
+    type Item: Copy;
+    type Cost: Ord + std::ops::Add<Output = Self::Cost> + Copy;
 
     const NOCOST: Self::Cost;
     const DEL: Self::Cost;
@@ -21,7 +21,7 @@ pub fn dist_naif_rec<T, I>(mut xi: I, mut yi: I, c: T::Cost, dist: Option<T::Cos
 where T: MetricSpace, I: Iterator<Item = T::Item>
 {
     match (xi.next(), yi.next()) {
-        (None, None) => match dist { Some(dist) => c.min(dist), None => c },
+        (None, None) => c.min(dist.unwrap_or(c)),
         (Some(xj), Some(yj)) => dist_naif_rec::<T, I>(xi, yi, c + T::sub(xj, yj), dist),
         (Some(_), None) => dist_naif_rec::<T, I>(xi, yi, c + T::DEL, dist),
         (None, Some(_)) => dist_naif_rec::<T, I>(xi, yi, c + T::INS, dist),
@@ -68,8 +68,8 @@ mod tests {
 
         for (inp, result) in testcases {
             let (l, r) = inp.expect("error reading input!");
-            let d = super::dist_naif::<DnaMetricSpace, _>(l.into_iter(), r.into_iter());
-            assert_eq!(d, *result, "result is not good :(");
+            let d = super::dist_naif::<DnaMetricSpace, _>(l.iter().copied(), r.iter().copied());
+            assert_eq!(d, *result, "result for dist_naif({:?}, {:?}) should be {} but {} was given instead!", l, r, *result, d);
         }
     }
 }
