@@ -4,7 +4,8 @@ pub trait MetricSpace {
     type Item: Copy;
     type Cost: Ord + std::ops::Add<Output = Self::Cost> + Copy;
 
-    const NOCOST: Self::Cost;
+    const ZEROCOST: Self::Cost;
+    const INFCOST: Self::Cost;
     const DEL: Self::Cost;
     const INS: Self::Cost;
     fn sub(a: Self::Item, b: Self::Item) -> Self::Cost;
@@ -14,18 +15,18 @@ pub trait MetricSpace {
 pub fn dist_naif<M, I>(x: I, y: I) -> M::Cost
 where M: MetricSpace, I: Iterator<Item = M::Item>
 {
-    dist_naif_rec::<M, _>(x, y, M::NOCOST, None)
+    dist_naif_rec::<M, _>(x, y, M::ZEROCOST, M::INFCOST)
 }
 
-pub fn dist_naif_rec<T, I>(mut xi: I, mut yi: I, c: T::Cost, dist: Option<T::Cost>) -> T::Cost
+pub fn dist_naif_rec<T, I>(mut xi: I, mut yi: I, c: T::Cost, mut dist: T::Cost) -> T::Cost
 where T: MetricSpace, I: Iterator<Item = T::Item>
 {
-    match (xi.next(), yi.next()) {
-        (None, None) => c.min(dist.unwrap_or(c)),
-        (Some(xj), Some(yj)) => dist_naif_rec::<T, I>(xi, yi, c + T::sub(xj, yj), dist),
-        (Some(_), None) => dist_naif_rec::<T, I>(xi, yi, c + T::DEL, dist),
-        (None, Some(_)) => dist_naif_rec::<T, I>(xi, yi, c + T::INS, dist),
-    }
+    let m = (xi.next(), yi.next());
+    if let (None, None) = m { return c.min(dist); }
+    if let (Some(xj), Some(yj)) = m { dist = dist_naif_rec::<T, I>(xi, yi, c + T::sub(xj, yj), dist); }
+    if let (Some(_), None) = m { dist = dist_naif_rec::<T, I>(xi, yi, c + T::DEL, dist); }
+    if let (None, Some(_)) = m { dist = dist_naif_rec::<T, I>(xi, yi, c + T::INS, dist); }
+    dist
 }
 
 #[cfg(test)]
@@ -37,7 +38,8 @@ mod tests {
         type Item = char;
         type Cost = u64;
 
-        const NOCOST: u64 = 0;
+        const ZEROCOST: u64 = 0;
+        const INFCOST: u64 = u64::MAX;
         const DEL: u64 = 1;
         const INS: u64 = 1;
         fn sub(a: char, b: char) -> u64 { if a == b {0} else {1} }

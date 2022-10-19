@@ -32,7 +32,8 @@ impl MetricSpace for DnaMetricSpace {
 
     const DEL: Self::Cost = 2;
     const INS: Self::Cost = 2;
-    const NOCOST: Self::Cost = 0;
+    const ZEROCOST: Self::Cost = 0;
+    const INFCOST: Self::Cost = Self::Cost::MAX;
 
     fn sub(a: Self::Item, b: Self::Item) -> Self::Cost { 
         use Dna as D;
