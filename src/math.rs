@@ -1,5 +1,7 @@
 //! The Math crate of the project
 
+use std::{clone::Clone};
+
 pub trait MetricSpace {
     type Item: Copy;
     type Cost: Ord + std::ops::Add<Output = Self::Cost> + Copy;
@@ -13,19 +15,21 @@ pub trait MetricSpace {
 
 /// Calculate distance between sequences x and y in the MetricSpace M
 pub fn dist_naif<M, I>(x: I, y: I) -> M::Cost
-where M: MetricSpace, I: Iterator<Item = M::Item>
+where M: MetricSpace, I: Iterator<Item = M::Item> + Clone
 {
     dist_naif_rec::<M, _>(x, y, M::ZEROCOST, M::INFCOST)
 }
 
 pub fn dist_naif_rec<T, I>(mut xi: I, mut yi: I, c: T::Cost, mut dist: T::Cost) -> T::Cost
-where T: MetricSpace, I: Iterator<Item = T::Item>
+where T: MetricSpace, I: Iterator<Item = T::Item> + Clone
 {
     let m = (xi.next(), yi.next());
+    // println!("dist {} {}: {} {}", m.0.and_then(|x| Some(x.to_string())).unwrap_or(String::from("--")), m.1.and_then(|x| Some(x.to_string())).unwrap_or(String::from("--")), dist, c);
     if let (None, None) = m { return c.min(dist); }
-    if let (Some(xj), Some(yj)) = m { dist = dist_naif_rec::<T, I>(xi, yi, c + T::sub(xj, yj), dist); }
-    if let (Some(_), None) = m { dist = dist_naif_rec::<T, I>(xi, yi, c + T::DEL, dist); }
-    if let (None, Some(_)) = m { dist = dist_naif_rec::<T, I>(xi, yi, c + T::INS, dist); }
+    if let (Some(xj), Some(yj)) = m { dist = dist_naif_rec::<T, I>(xi.clone(), yi.clone(), c + T::sub(xj, yj), dist); }
+    if let (Some(_), _) = m { dist = dist_naif_rec::<T, I>(xi.clone(), yi.clone(), c + T::DEL, dist); }
+    if let (_, Some(_)) = m { dist = dist_naif_rec::<T, I>(xi, yi, c + T::INS, dist); }
+    // println!("end dist {} {}: {} {}", m.0.and_then(|x| Some(x.to_string())).unwrap_or(String::from("--")), m.1.and_then(|x| Some(x.to_string())).unwrap_or(String::from("--")), dist, c);
     dist
 }
 

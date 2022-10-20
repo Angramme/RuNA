@@ -2,12 +2,19 @@ use simple_error::{SimpleError, bail};
 use std::error::Error;
 use std::{path::Path, fs::File};
 use std::io::{BufReader, BufRead};
+use std::fmt::Display;
 
 use crate::math::*;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Dna {
     A, C, T, G, Gap
+}
+
+impl Display for Dna {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl std::str::FromStr for Dna {
