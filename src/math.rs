@@ -23,45 +23,18 @@ where M: MetricSpace, I: Iterator<Item = M::Item> + Clone
 pub fn dist_naif_rec<T, I>(mut xi: I, mut yi: I, c: T::Cost, mut dist: T::Cost) -> T::Cost
 where T: MetricSpace, I: Iterator<Item = T::Item> + Clone
 {
+    let (xo, yo) = (xi.clone(), yi.clone());
     let m = (xi.next(), yi.next());
-    // println!("dist {} {}: {} {}", m.0.and_then(|x| Some(x.to_string())).unwrap_or(String::from("--")), m.1.and_then(|x| Some(x.to_string())).unwrap_or(String::from("--")), dist, c);
     if let (None, None) = m { return c.min(dist); }
     if let (Some(xj), Some(yj)) = m { dist = dist_naif_rec::<T, I>(xi.clone(), yi.clone(), c + T::sub(xj, yj), dist); }
-    if let (Some(_), _) = m { dist = dist_naif_rec::<T, I>(xi.clone(), yi.clone(), c + T::DEL, dist); }
-    if let (_, Some(_)) = m { dist = dist_naif_rec::<T, I>(xi, yi, c + T::INS, dist); }
-    // println!("end dist {} {}: {} {}", m.0.and_then(|x| Some(x.to_string())).unwrap_or(String::from("--")), m.1.and_then(|x| Some(x.to_string())).unwrap_or(String::from("--")), dist, c);
+    if let (Some(_), _) = m { dist = dist_naif_rec::<T, I>(xi, yo, c + T::DEL, dist); }
+    if let (_, Some(_)) = m { dist = dist_naif_rec::<T, I>(xo, yi, c + T::INS, dist); }
     dist
 }
 
 #[cfg(test)]
 mod tests {
     use crate::dna::{DnaBlocks, DnaMetricSpace};
-
-    struct StrMetricSpace;
-    impl crate::math::MetricSpace for StrMetricSpace {
-        type Item = char;
-        type Cost = u64;
-
-        const ZEROCOST: u64 = 0;
-        const INFCOST: u64 = u64::MAX;
-        const DEL: u64 = 1;
-        const INS: u64 = 1;
-        fn sub(a: char, b: char) -> u64 { if a == b {0} else {1} }
-    }
-
-    #[test]
-    fn dist_naif() {
-        let test_results = &[
-            ("abc", "abc", 0),
-            ("abc", "abs", 1),
-        ];
-
-        for (x ,y, result) in test_results {
-            let v = super::dist_naif::<StrMetricSpace, _>(x.chars(), y.chars());
-            assert_eq!(v, *result, "dist_naif::<StrMetricSpace, _>(\"{}\".chars(), \"{}\".chars()) = {} is not equal to the expected {}!", 
-                x, y, v, *result);
-        }
-    }
 
     #[test]
     fn dist_naif_dna(){
