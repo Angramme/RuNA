@@ -28,8 +28,7 @@ where F: Fn(DnaBlock)
     let blocks = filenames
         .map(|(size, ps)| (size, ps
             .map(read_to_string)
-            .filter_map(|x| x.ok())
-            .next()
+            .find_map(|x| x.ok())
             .expect("cannot open file!")
         ))
         .map(|(size, str)| (size, str.parse::<DnaBlock>().expect("cannot parse file!")));
