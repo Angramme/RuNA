@@ -38,7 +38,7 @@ where F: Fn(DnaBlock)
 
     times
         .map(|(size, time)| {
-            println!("completed call of size {} in {}s", size, time.as_secs());
+            println!("👍 completed call of size {} in {}s", size, time.as_secs());
             (size, time)
         })
         .take_while(|(_, time)| *time < Duration::from_secs(60))
@@ -50,5 +50,5 @@ fn main(){
         dist_naif::<DnaMetricSpace, _>(l.iter().copied(), r.iter().copied());
     });
 
-    println!("the limit of dist_naif is {}", dist_naif_limit); // this gives 12, 13 executes in 122s
+    println!("the limit of ✨dist_naif✨ is {}", dist_naif_limit); // this gives 12, 13 executes in 122s
 }
