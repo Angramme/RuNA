@@ -1,5 +1,6 @@
 use simple_error::{SimpleError, bail};
 use std::error::Error;
+use std::str::FromStr;
 use std::{path::Path, fs::File};
 use std::io::{BufReader, BufRead};
 use std::fmt::Display;
@@ -52,6 +53,41 @@ impl MetricSpace for DnaMetricSpace {
     }
 }
 
+/// Data structure representing a pair of Dna's
+#[derive(Debug, PartialEq, Eq)]
+pub struct DnaBlock(pub Vec<Dna>, pub Vec<Dna>);
+
+impl FromStr for DnaBlock {
+    type Err = Box<dyn Error>;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut ls = s.lines();
+
+        let n = (if let Some(t) = ls.next() { t.parse::<usize>() } else { bail!("couldn't read line containing n!") })?;
+        let m = (if let Some(t) = ls.next() { t.parse::<usize>() } else { bail!("couldn't read line containing m!") })?;
+        
+        let mut xs = Vec::with_capacity(n);
+        match ls.next() {
+            Some(t) => for s in t.split_ascii_whitespace(){
+                xs.push(s.parse::<Dna>()?);
+            },
+            None => bail!("couldn't read line containing xs!"),
+        }
+
+        let mut ys = Vec::with_capacity(m);
+        match ls.next() {
+            Some(t) => for s in t.split_ascii_whitespace(){
+                ys.push(s.parse::<Dna>()?);
+            },
+            None => bail!("couldn't read line containing ys!"),
+        }
+        
+        if xs.len() != n { bail!(format!("size mismatch between the number of DNA letters {} and the length provided! {}", xs.len(), n)); }
+        if ys.len() != m { bail!(format!("size mismatch between the number of DNA letters {} and the length provided! {}", ys.len(), m)); }
+
+        Ok(DnaBlock(xs, ys))
+    }
+}
+
 /// An iterator type that reads a file lazily and gives dna blocks contained inside.
 pub struct DnaBlocks{
     reader: Box<dyn BufRead>,
@@ -76,7 +112,7 @@ impl DnaBlocks {
 }
 
 impl Iterator for DnaBlocks {
-    type Item = Result<(Vec<Dna>, Vec<Dna>), Box<dyn Error>>;
+    type Item = Result<DnaBlock, Box<dyn Error>>;
     fn next(&mut self) -> Option<Self::Item> {
         let mut buf = String::new();
         for _ in 0..4 { 
@@ -87,43 +123,15 @@ impl Iterator for DnaBlocks {
         if buf.is_empty() {
             None
         } else {
-            Some(read_double_dna_block(buf.as_str()))
+            Some(buf.as_str().parse::<DnaBlock>())
         }
     }
-}
-
-fn read_double_dna_block(ite: &str) -> Result<(Vec<Dna>, Vec<Dna>), Box<dyn Error>>
-{ // TODO: replace with cleaner code
-    let mut ls = ite.lines();
-
-    let n = (if let Some(t) = ls.next() { t.parse::<usize>() } else { bail!("couldn't read line containing n!") })?;
-    let m = (if let Some(t) = ls.next() { t.parse::<usize>() } else { bail!("couldn't read line containing m!") })?;
-    
-    let mut xs = Vec::with_capacity(n);
-    match ls.next() {
-        Some(t) => for s in t.split_ascii_whitespace(){
-            xs.push(s.parse::<Dna>()?);
-        },
-        None => bail!("couldn't read line containing xs!"),
-    }
-
-    let mut ys = Vec::with_capacity(m);
-    match ls.next() {
-        Some(t) => for s in t.split_ascii_whitespace(){
-            ys.push(s.parse::<Dna>()?);
-        },
-        None => bail!("couldn't read line containing ys!"),
-    }
-    
-    if xs.len() != n { bail!(format!("size mismatch between the number of DNA letters {} and the length provided! {}", xs.len(), n)); }
-    if ys.len() != m { bail!(format!("size mismatch between the number of DNA letters {} and the length provided! {}", ys.len(), m)); }
-
-    Ok((xs, ys))    
 }
 
 #[cfg(test)]
 mod tests{
     use super::Dna::*;
+    use super::DnaBlock;
     use super::Path;
 
     use super::DnaBlocks;
@@ -136,7 +144,7 @@ mod tests{
         match x {
             Err(x) => panic!("bad read, error: {}", x),
             Ok(x) => 
-                assert_eq!(x, (vec![T, A, T, A, T, G, A ,G ,T, C], vec![T, A, T, T, T]), "the reader is not correct!")
+                assert_eq!(x, DnaBlock(vec![T, A, T, A, T, G, A ,G ,T, C], vec![T, A, T, T, T]), "the reader is not correct!")
         }
     }
 }

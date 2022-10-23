@@ -34,19 +34,26 @@ where T: MetricSpace, I: Iterator<Item = T::Item> + Clone
 
 #[cfg(test)]
 mod tests {
-    use crate::dna::{DnaBlocks, DnaMetricSpace};
+    use std::fs::read_to_string;
+
+    use crate::dna::{DnaBlocks, DnaMetricSpace, DnaBlock};
 
     #[test]
     fn dist_naif_dna(){
-        let block1 = DnaBlocks::from_path("./tests/Instances_genome/Inst_0000010_44.adn").expect("cannot read file");
-        let block2 = DnaBlocks::from_path("./tests/Instances_genome/Inst_0000010_7.adn").expect("cannot read file");
-        let block3 = DnaBlocks::from_path("./tests/Instances_genome/Inst_0000010_8.adn").expect("cannot read file");
-        let blocks = block1.chain(block2).chain(block3);
+        let filenames = &[
+            "./tests/Instances_genome/Inst_0000010_44.adn",
+            "./tests/Instances_genome/Inst_0000010_7.adn",
+            "./tests/Instances_genome/Inst_0000010_8.adn"
+        ];
+
+        let blocks = filenames
+            .iter()
+            .map(|p| read_to_string(p).expect("cannot read file! {}"))
+            .map(|s| s.parse::<DnaBlock>().expect("cannot parse file: {}"));
 
         let testcases = blocks.zip([10, 8, 2].iter());
 
-        for (inp, result) in testcases {
-            let (l, r) = inp.expect("error reading input!");
+        for (DnaBlock(l, r), result) in testcases {
             let d = super::dist_naif::<DnaMetricSpace, _>(l.iter().copied(), r.iter().copied());
             assert_eq!(d, *result, "result for dist_naif({:?}, {:?}) should be {} but {} was given instead!", l, r, *result, d);
         }

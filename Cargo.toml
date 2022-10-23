@@ -5,5 +5,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "seq_align"
+path = "src/lib.rs"
+
 [dependencies]
 simple-error = "0.1.9"
