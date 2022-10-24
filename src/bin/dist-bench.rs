@@ -14,40 +14,34 @@ where F: FnOnce()
 fn lapse_limit<F>(f: F) -> usize 
 where F: Fn(DnaBlock)
 {
-    let sizes1 = [10, 12, 13, 14, 20, 50, 100, 500].iter().copied();
-    let sizes2 = (3..).map(|i| usize::pow(10, i));
-    let sizes = sizes1.chain(sizes2); // this is infinite ♾, ~~waw, so cool ✨
-    let secsizes = [7, 8, 13, 45];
+    let sizes = {
+        let sizes1 = [10, 12, 13, 14, 20, 50, 100, 500].into_iter();
+        let sizes2 = (3..).map(|i| usize::pow(10, i));
+        sizes1.chain(sizes2) // this is infinite ♾, ~~waw, so cool ✨
+    };
+    let secsizes = [7, 8, 13, 45, 32, 56, 89, 76]; // this is here because the endings of files differ for different sizes
     
-    let filenames = sizes
-        .map(|size| (size, secsizes
+    let blocks = sizes.clone()
+        .map(|size| secsizes
             .into_iter()
             .map(move |size2| format!("./tests/Instances_genome/Inst_{:07}_{}.adn", size, size2))
-        ));
-
-    let blocks = filenames
-        .map(|(size, ps)| (size, ps
-            .map(read_to_string)
-            .find_map(|x| x.ok())
+            .map(read_to_string) // try opening the file
+            .find_map(|x| x.ok()) // open first existing file
             .expect("cannot open file!")
-        ))
-        .map(|(size, str)| (size, str.parse::<DnaBlock>().expect("cannot parse file!")));
-
-    let times = blocks
-        .map(|(size, dna)| (size, lapse(|| f(dna))));
-
-    times
-        .map(|(size, time)| {
-            println!("👍 completed call of size {} in {}s", size, time.as_secs());
-            (size, time)
-        })
-        .take_while(|(_, time)| *time < Duration::from_secs(60))
-        .last().map_or(0, |(size, _)| size)
+        )
+        .map(|str| str.parse::<DnaBlock>().expect("cannot parse file!"));
+    
+    blocks
+        .map(|dna| lapse(|| f(dna))) // measure execution time
+        .zip(sizes)
+        .inspect(|(time, size)| println!("👍 completed call of size {} in {}s", size, time.as_secs_f64()))
+        .take_while(|(time, _)| *time < Duration::from_secs(60))
+        .last().map_or(0, |(_, size)| size)
 }
 
 fn main(){
     let dist_naif_limit = lapse_limit(|DnaBlock(l, r)| {
-        dist_naif::<DnaMetricSpace, _>(l.iter().copied(), r.iter().copied());
+        dist_naif::<DnaMetricSpace, _>(l.into_iter(), r.into_iter());
     });
 
     println!("the limit of ✨dist_naif✨ is {}", dist_naif_limit); // this gives 12, 13 executes in 122s
