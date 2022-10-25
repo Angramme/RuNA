@@ -1,6 +1,6 @@
 //! The Math crate of the project
 
-use std::{clone::Clone};
+use std::clone::Clone;
 
 pub trait MetricSpace {
     type Item: Copy;
@@ -41,21 +41,20 @@ mod tests {
     #[test]
     fn dist_naif_dna(){
         let filenames = &[
-            "./tests/Instances_genome/Inst_0000010_44.adn",
-            "./tests/Instances_genome/Inst_0000010_7.adn",
-            "./tests/Instances_genome/Inst_0000010_8.adn"
+            (10, "./tests/Instances_genome/Inst_0000010_44.adn"),
+            (8, "./tests/Instances_genome/Inst_0000010_7.adn"),
+            (2, "./tests/Instances_genome/Inst_0000010_8.adn")
         ];
 
-        let blocks = filenames
+        let testcases = filenames
             .iter()
-            .map(|p| read_to_string(p).expect("cannot read file! {}"))
-            .map(|s| s.parse::<DnaBlock>().expect("cannot parse file: {}"));
+            .map(|(t, p)| (t, read_to_string(p).expect("cannot read file! {}")))
+            .map(|(t, s)| (t, s.parse::<DnaBlock>().expect("cannot parse file: {}")));
 
-        let testcases = blocks.zip([10, 8, 2].iter());
-
-        for (DnaBlock(l, r), result) in testcases {
+        for (result, DnaBlock(l, r)) in testcases {
             let d = super::dist_naif::<DnaMetricSpace, _>(l.iter().copied(), r.iter().copied());
-            assert_eq!(d, *result, "result for dist_naif({:?}, {:?}) should be {} but {} was given instead!", l, r, *result, d);
+            assert_eq!(d, *result, 
+                "result for dist_naif({:?}, {:?}) should be {} but {} was given instead!", l, r, *result, d);
         }
     }
 }
