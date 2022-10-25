@@ -36,7 +36,7 @@ where T: MetricSpace, I: Iterator<Item = T::Item> + Clone
 mod tests {
     use std::fs::read_to_string;
 
-    use crate::dna::{DnaBlocks, DnaMetricSpace, DnaBlock};
+    use crate::dna::{DnaMetricSpace, DnaBlock};
 
     #[test]
     fn dist_naif_dna(){
