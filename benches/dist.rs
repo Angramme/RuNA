@@ -42,9 +42,20 @@ where F: Fn(DnaBlock)
 }
 
 fn main(){
-    let dist_naif_limit = lapse_limit(|DnaBlock(l, r)| {
-        dist_naif::<DnaMetricSpace, _>(l.into_iter(), r.into_iter());
-    });
+    let fcts = vec![
+        ("dist_naif", &dist_naif::<DnaMetricSpace, _>) // this gives 12, 13 executes in 122s
+    ];
+    
+    let limits = fcts
+        .iter()
+        .map(|(name, f)| (
+            name,
+            lapse_limit(|DnaBlock(l, r)| {
+                f(l.into_iter(), r.into_iter());
+            })
+        ));
 
-    println!("the limit of ✨dist_naif✨ is {}", dist_naif_limit); // this gives 12, 13 executes in 122s
+    for (name, limit) in limits {
+        println!("the limit of ✨{}✨ is {}", name, limit); 
+    }
 }
