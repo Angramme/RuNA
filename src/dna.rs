@@ -59,25 +59,25 @@ impl FromStr for DnaBlock {
     type Err = Box<dyn Error>;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut ls = s.lines();
-
-        let n = (if let Some(t) = ls.next() { t.parse::<usize>() } else { bail!("couldn't read line containing n!") })?;
-        let m = (if let Some(t) = ls.next() { t.parse::<usize>() } else { bail!("couldn't read line containing m!") })?;
+        
+        let n = ls.next()
+            .ok_or("couldn't read line containing n!")?
+            .parse::<usize>()?;
+        let m = ls.next()
+            .ok_or("couldn't read line containing m!")?
+            .parse::<usize>()?;
         
         let mut xs = Vec::with_capacity(n);
-        match ls.next() {
-            Some(t) => for s in t.split_ascii_whitespace(){
-                xs.push(s.parse::<Dna>()?);
-            },
-            None => bail!("couldn't read line containing xs!"),
-        }
-
+        for s in ls.next()
+            .ok_or("couldn't read line containing xs!")?
+            .split_ascii_whitespace()
+            { xs.push(s.parse::<Dna>()?); }
+        
         let mut ys = Vec::with_capacity(m);
-        match ls.next() {
-            Some(t) => for s in t.split_ascii_whitespace(){
-                ys.push(s.parse::<Dna>()?);
-            },
-            None => bail!("couldn't read line containing ys!"),
-        }
+        for s in ls.next()
+            .ok_or("couldn't read line containing ys!")?
+            .split_ascii_whitespace()
+            { ys.push(s.parse::<Dna>()?); }
         
         if xs.len() != n { bail!(format!("size mismatch between the number of DNA letters {} and the length provided! {}", xs.len(), n)); }
         if ys.len() != m { bail!(format!("size mismatch between the number of DNA letters {} and the length provided! {}", ys.len(), m)); }
