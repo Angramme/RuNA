@@ -47,13 +47,16 @@ impl Iterator for DnaBlocks {
 mod tests{
     use crate::dna::Dna::*;
     use super::DnaBlock;
-    use super::Path;
+    use std::env;
 
     use super::DnaBlocks;
 
     #[test]
     fn read_double_dna_block(){
-        let path = Path::new("./tests/Instances_genome/Inst_0000010_44.adn");
+        let path = env::var("GENOME_DATA")
+            .expect("GENOME_DATA environnement variable cannot be found!") 
+            + "/Inst_0000010_44.adn";
+
         let mut bl = DnaBlocks::from_path(path).expect("cannot read file");
         let x = bl.next().expect("bad reading: file is not empty!");
         match x {

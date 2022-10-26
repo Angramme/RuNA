@@ -35,20 +35,23 @@ where T: MetricSpace, I: Iterator<Item = T::Item> + Clone
 #[cfg(test)]
 mod tests {
     use std::fs::read_to_string;
+    use std::env;
 
     use crate::dna::{DnaMetricSpace, DnaBlock};
 
     #[test]
     fn dist_naif_dna(){
+        let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
         let filenames = &[
-            (10, "./tests/Instances_genome/Inst_0000010_44.adn"),
-            (8, "./tests/Instances_genome/Inst_0000010_7.adn"),
-            (2, "./tests/Instances_genome/Inst_0000010_8.adn")
+            (10, "Inst_0000010_44.adn"),
+            (8, "Inst_0000010_7.adn"),
+            (2, "Inst_0000010_8.adn")
         ];
 
         let testcases = filenames
             .iter()
-            .map(|(t, p)| (t, read_to_string(p).expect("cannot read file! {}")))
+            .map(|(t, p)| (t, gdata.clone() + "/" + p))
+            .map(|(t, p)| (t, read_to_string(p).expect("cannot read file!")))
             .map(|(t, s)| (t, s.parse::<DnaBlock>().expect("cannot parse file: {}")));
 
         for (result, DnaBlock(l, r)) in testcases {

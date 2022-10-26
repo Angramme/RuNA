@@ -2,6 +2,7 @@
 use std::time::{Duration, Instant};
 use seq_align::{math::*, dna::*};
 use std::fs::read_to_string;
+use std::env;
 
 fn lapse<F>(f: F) -> Duration 
 where F: FnOnce()
@@ -20,11 +21,12 @@ where F: Fn(DnaBlock)
         sizes1.chain(sizes2) // this is infinite ♾, ~~waw, so cool ✨
     };
     let secsizes = [7, 8, 13, 45, 32, 56, 89, 76]; // this is here because the endings of files differ for different sizes
-    
+    let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
+
     let blocks = sizes.clone()
         .map(|size| secsizes
             .into_iter()
-            .map(move |size2| format!("./tests/Instances_genome/Inst_{:07}_{}.adn", size, size2))
+            .map(|size2| format!("{}/Inst_{:07}_{}.adn", gdata, size, size2))
             .map(read_to_string) // try opening the file
             .find_map(|x| x.ok()) // open first existing file
             .expect("cannot open file!")

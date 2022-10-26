@@ -89,6 +89,7 @@ impl FromStr for DnaBlock {
 #[cfg(test)]
 mod tests{
     use std::fs::read_to_string;
+    use std::env;
 
     use super::Dna::*;
     use super::DnaBlock;
@@ -96,7 +97,10 @@ mod tests{
     #[test]
     fn read_double_dna_block(){
         let x = 
-            read_to_string("./tests/Instances_genome/Inst_0000010_44.adn")
+            read_to_string(
+                env::var("GENOME_DATA")
+                .expect("GENOME_DATA environnement variable cannot be found!") 
+                + "/Inst_0000010_44.adn")
             .expect("cannot open file!")
             .parse::<DnaBlock>()
             .expect("cannot parse file!");

@@ -4,11 +4,13 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Kacper Ozieblowski", "Rodrigue Tavernier"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 name = "seq_align"
 path = "src/lib.rs"
 
 [dependencies]
 simple-error = "0.1.9"
+
+[[bench]]
+name = "dist"
+harness = false

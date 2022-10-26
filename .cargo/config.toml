@@ -1,0 +1,2 @@
+[env]
+GENOME_DATA = { value = "tests/Instances_genome", relative = true }
