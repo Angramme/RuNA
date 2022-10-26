@@ -1,2 +1,2 @@
 [env]
-GENOME_DATA = { value = "tests/Instances_genome", relative = true }
+GENOME_DATA = { value = "tests/genome_instances_data", relative = true }
