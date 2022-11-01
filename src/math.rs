@@ -1,16 +1,32 @@
 //! The Math crate of the project
 
-use std::clone::Clone;
+use std::{clone::Clone, fmt::Display};
 
 pub trait MetricSpace {
-    type Item: Copy;
+    type Item: Copy + Display;
     type Cost: Ord + std::ops::Add<Output = Self::Cost> + Copy;
 
     const ZEROCOST: Self::Cost;
     const INFCOST: Self::Cost;
+    const GAP: Self::Item;
     const DEL: Self::Cost;
     const INS: Self::Cost;
     fn sub(a: Self::Item, b: Self::Item) -> Self::Cost;
+}
+pub struct Align<M: MetricSpace>(Vec<M::Item>, Vec<M::Item>);
+
+impl<M: MetricSpace> Display for Align<M> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "\n| ")?;
+        for a in self.0.iter() {
+            write!(f, "{} ", a)?;
+        }
+        write!(f, "\n| ")?;
+        for a in self.1.iter() {
+            write!(f, "{} ", a)?;
+        }
+        Ok(())
+    }
 }
 
 /// Calculate distance between sequences x and y in the MetricSpace M
@@ -32,7 +48,7 @@ where T: MetricSpace, I: Iterator<Item = T::Item> + Clone
     dist
 }
 
-pub fn dist_1<M>(x: &[M::Item], y: &[M::Item]) -> M::Cost 
+pub fn dist_dp_full<M>(x: &[M::Item], y: &[M::Item]) -> Vec<Vec<M::Cost>>
 where M: MetricSpace, 
 {
     use std::cmp::min;
@@ -41,24 +57,76 @@ where M: MetricSpace,
     let m = y.len() + 1;
     let mut dp = vec![vec![M::ZEROCOST; m]; n];
     for i in 1..n {
-        dp[i][0] = dp[i-1][0] + M::INS;
+        dp[i][0] = dp[i-1][0] + M::DEL;
     }
     for j in 1..m {
-        dp[0][j] = dp[0][j-1] + M::DEL;
+        dp[0][j] = dp[0][j-1] + M::INS;
     }
     for i in 1..n {
         for j in 1..m {
             dp[i][j] = min(
                 dp[i-1][j-1] + M::sub(x[i-1], y[j-1]),
                 min(
-                    dp[i][j-1] + M::DEL,
-                    dp[i-1][j] + M::INS
+                    dp[i][j-1] + M::INS,
+                    dp[i-1][j] + M::DEL
                 )
             )
         }
     }
+    dp
+}
+
+pub fn dist_1<M>(x: &[M::Item], y: &[M::Item]) -> M::Cost 
+where M: MetricSpace
+{
+    let dp = dist_dp_full::<M>(x, y);
     dp[x.len()][y.len()]
 }
+
+pub fn sol_1<M>(x: &[M::Item], y: &[M::Item], t: &[Vec<M::Cost>]) -> Align<M>
+where M: MetricSpace
+{
+    let mut xb = vec![];
+    let mut yb = vec![];
+    let t = &t[0..=x.len()][0..=y.len()];
+
+    let mut i = 1;
+    let mut j = 1;
+    while i <= x.len() && j <= y.len() {
+        if t[i][j] == t[i][j-1] + M::INS {
+            xb.push(M::GAP);
+            yb.push(y[j-1]);
+            j += 1;
+        } else if t[i][j] == t[i-1][j] + M::DEL {
+            xb.push(x[i-1]);
+            yb.push(M::GAP);
+            i += 1;
+        } else {
+            xb.push(x[i-1]);
+            yb.push(y[j-1]);
+            i += 1;
+            j += 1;
+        }
+    }
+    while i <= x.len() {
+        xb.push(x[i-1]);
+        yb.push(M::GAP);
+        i += 1;
+    }
+    while j <= y.len() {
+        xb.push(M::GAP);
+        yb.push(y[j-1]);
+        j += 1;
+    }
+    Align(xb, yb)
+}
+
+pub fn prog_dyn<M>(x: &[M::Item], y: &[M::Item]) -> (M::Cost, Align<M>)
+where M: MetricSpace
+{
+    let dp = dist_dp_full::<M>(x, y);
+    (dp[x.len()][y.len()], sol_1::<M>(x, y, dp.as_slice()))
+} 
 
 #[cfg(test)]
 mod tests {
@@ -66,6 +134,8 @@ mod tests {
     use std::env;
 
     use crate::dna::{DnaMetricSpace, DnaBlock, Dna};
+
+    use super::prog_dyn;
 
     fn test_dist_3<F>(f: F, name: &str)
     where F: Fn(&Vec<Dna>, &Vec<Dna>) -> u64
@@ -132,5 +202,25 @@ mod tests {
         test_dist_against_naif(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
             super::dist_1::<DnaMetricSpace>(l, r)
         }, "dist_1");
+    }
+
+    #[test]
+    fn prog_dyn_dna(){
+        let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
+        let filenames = &[
+            "Inst_0000010_44.adn",
+            "Inst_0000010_7.adn",
+        ];
+
+        let testcases = filenames
+            .iter()
+            .map(|p| gdata.clone() + "/" + p)
+            .map(|p| read_to_string(p).expect("cannot read file!"))
+            .map(|s| s.parse::<DnaBlock>().expect("cannot parse file: {}"));
+
+        for DnaBlock(l, r) in testcases {
+            let (d, al) = prog_dyn::<DnaMetricSpace>(&l, &r);
+            println!("distance is {} and the optimal alignement is: {}", d, al);
+        }
     }
 }

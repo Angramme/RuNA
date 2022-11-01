@@ -12,7 +12,10 @@ pub enum Dna {
 
 impl Display for Dna {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        match self {
+            Dna::Gap => write!(f, "-"),
+            _ => write!(f, "{:?}", self)
+        }
     }
 }
 
@@ -38,12 +41,14 @@ impl MetricSpace for DnaMetricSpace {
 
     const DEL: Self::Cost = 2;
     const INS: Self::Cost = 2;
+    const GAP: Self::Item = Dna::Gap;
     const ZEROCOST: Self::Cost = 0;
     const INFCOST: Self::Cost = Self::Cost::MAX;
 
     fn sub(a: Self::Item, b: Self::Item) -> Self::Cost { 
         use Dna as D;
         match (a, b) {
+            (D::Gap, _) | (_, D::Gap) => panic!("invalid argument passed!"),
             (x, y) if x == y => 0,
             (D::A, D::T) | (D::G, D::C) | (D::T, D::A) | (D::C, D::G) => 3,
             (_, _) => 4
