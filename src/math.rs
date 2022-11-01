@@ -126,7 +126,35 @@ where M: MetricSpace
 {
     let dp = dist_dp_full::<M>(x, y);
     (dp[x.len()][y.len()], sol_1::<M>(x, y, dp.as_slice()))
-} 
+}
+
+pub fn dist_2<M>(x: &[M::Item], y: &[M::Item]) -> M::Cost 
+where M: MetricSpace
+{
+    use std::cmp::min;
+
+    let n = x.len() + 1;
+    let m = y.len() + 1;
+    let mut dp = vec![vec![M::ZEROCOST; m]; 2];
+
+    for j in 1..m {
+        dp[0][j] = dp[0][j-1] + M::INS;
+    }
+    for i in 1..n {
+        dp[1][0] = dp[0][0] + M::DEL;
+        for j in 1..m {
+            dp[1][j] = min(
+                dp[0][j-1] + M::sub(x[i-1], y[j-1]),
+                min(
+                    dp[1][j-1] + M::INS,
+                    dp[0][j] + M::DEL
+                )
+            )
+        }
+        dp.swap(0, 1);
+    }
+    dp[0][y.len()]
+}
 
 #[cfg(test)]
 mod tests {
@@ -160,8 +188,8 @@ mod tests {
         }
     }
 
-    fn test_dist_against_naif<F>(f: F, name: &str)
-    where F: Fn(&Vec<Dna>, &Vec<Dna>) -> u64
+    fn test_dist_against<F, F2>(f: F, f2: F2, name: &str)
+    where F: Fn(&Vec<Dna>, &Vec<Dna>) -> u64, F2: Fn(&Vec<Dna>, &Vec<Dna>) -> u64
     {
         let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
         let filenames = &[
@@ -169,9 +197,14 @@ mod tests {
             "Inst_0000010_7.adn",
             "Inst_0000010_8.adn",
             "Inst_0000012_13.adn",
-            // "Inst_0000012_56.adn",
-            // "Inst_0000012_32.adn",
-            // "Inst_0000013_56.adn",
+            "Inst_0000012_56.adn",
+            "Inst_0000012_32.adn",
+            "Inst_0000013_56.adn",
+            "Inst_0000013_89.adn",
+            "Inst_0000015_2.adn",
+            "Inst_0000015_4.adn",
+            "Inst_0000020_8.adn",
+            "Inst_0000020_17.adn",
         ];
 
         let testcases = filenames
@@ -182,13 +215,12 @@ mod tests {
 
         for DnaBlock(l, r) in testcases {
             let d = f(&l, &r);
-            let d2 = super::dist_naif::<DnaMetricSpace>(&l, &r);
+            let d2 = f2(&l, &r);
+            // let d2 = super::dist_naif::<DnaMetricSpace>(&l, &r);
             assert_eq!(d, d2, 
                 "result for {}({:?}, {:?}) should be {} but {} was given instead!", name, l, r, d2, d);
         }
     }
-
-
 
     #[test]
     fn dist_naif_dna(){
@@ -199,9 +231,22 @@ mod tests {
 
     #[test]
     fn dist_1_dna(){
-        test_dist_against_naif(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
+        test_dist_3(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
             super::dist_1::<DnaMetricSpace>(l, r)
         }, "dist_1");
+    }
+
+    #[test]
+    fn dist_2_dna(){
+        test_dist_3(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
+            super::dist_2::<DnaMetricSpace>(l, r)
+        }, "dist_2");
+
+        test_dist_against(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
+            super::dist_2::<DnaMetricSpace>(l, r)
+        }, |l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
+            super::dist_1::<DnaMetricSpace>(l, r)
+        }, "dist_2")
     }
 
     #[test]
