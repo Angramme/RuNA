@@ -20,7 +20,7 @@ where F: Fn(DnaBlock)
         let sizes2 = (3..).map(|i| usize::pow(10, i));
         sizes1.chain(sizes2) // this is infinite ♾, ~~waw, so cool ✨
     };
-    let secsizes = [7, 8, 13, 45, 32, 56, 89, 76]; // this is here because the endings of files differ for different sizes
+    let secsizes = [7, 8, 13, 45, 32, 56, 89, 76, 77]; // this is here because the endings of files differ for different sizes
     let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
 
     let blocks = sizes.clone()
@@ -42,18 +42,10 @@ where F: Fn(DnaBlock)
 }
 
 fn main(){
-    let fcts = vec![
-        ("dist_naif", &dist_naif::<DnaMetricSpace, _>) // this gives 12, 13 executes in 122s
+    let limits = vec![
+        ("dist_1", lapse_limit(|DnaBlock(l, r)| {dist_1::<DnaMetricSpace>(&l, &r);})), // 10000 before memory limit.
+        ("dist_naif", lapse_limit(|DnaBlock(l, r)| {dist_naif::<DnaMetricSpace>(&l, &r);})), // this gives 14, 15 executes in much more
     ];
-    
-    let limits = fcts
-        .iter()
-        .map(|(name, f)| (
-            name,
-            lapse_limit(|DnaBlock(l, r)| {
-                f(l.into_iter(), r.into_iter());
-            })
-        ));
 
     for (name, limit) in limits {
         println!("the limit of ✨{}✨ is {}", name, limit); 
