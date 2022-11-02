@@ -12,7 +12,7 @@ where F: FnOnce()
     start.elapsed()
 }
 
-fn lapse_limit<F>(name: &str, f: F) -> (&str, usize) 
+fn lapse_sequence<F>(name: &str, f: F, lim: Duration) -> Vec<(Duration, usize)>
 where F: Fn(DnaBlock)
 {
     let sizes = {
@@ -33,24 +33,46 @@ where F: Fn(DnaBlock)
         )
         .map(|str| str.parse::<DnaBlock>().expect("cannot parse file!"));
     
-    let lim = blocks
+    blocks
         .map(|dna| lapse(|| f(dna))) // measure execution time
         .zip(sizes)
         .inspect(|(time, size)| println!("👍 [{}] completed call of size {} in {}s", name, size, time.as_secs_f64()))
-        .take_while(|(time, _)| *time < Duration::from_secs(60))
-        .last().map_or(0, |(_, size)| size);
+        .take_while(|(time, _)| *time < lim)
+        .collect()
+}
+
+fn lapse_limit<F>(name: &str, f: F) -> (&str, usize) 
+where F: Fn(DnaBlock)
+{
+    let lim = lapse_sequence(name, f, Duration::from_secs(60)).iter()
+    .last().map_or(0, |(_, size)| *size);
     
     (name, lim)
 }
 
-fn main(){
+fn all_limits(){
     let limits = vec![
         lapse_limit("dist_2", |DnaBlock(l, r)| {dist_2::<DnaMetricSpace>(&l, &r);}), // 100000 in 68.3044632s
         lapse_limit("dist_1", |DnaBlock(l, r)| {dist_1::<DnaMetricSpace>(&l, &r);}), // 10000 before memory limit.
         lapse_limit("dist_naif", |DnaBlock(l, r)| {dist_naif::<DnaMetricSpace>(&l, &r);}), // this gives 14, 15 executes in much more
     ];
-
+    
     for (name, limit) in limits {
         println!("the limit of ✨{}✨ is {}", name, limit); 
+    }
+}
+
+fn gnuplot(){
+    let times = lapse_sequence("dist_2", |DnaBlock(l, r)| {dist_2::<DnaMetricSpace>(&l, &r);}, Duration::from_secs_f64(1.0));
+    
+    for (time, size) in times {
+        print!("({},{:.6})", size, time.as_secs_f64());
+    }
+}
+
+fn main(){
+    match env::args().nth(1) {
+        Some(x) if x == "gnuplot" => gnuplot(),
+        _ => all_limits(),
     }
 }
