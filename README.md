@@ -2,7 +2,11 @@
 
 ## RuNA
 
-This is a library for aligning DNA sequences. 
+**RuNA** is a library for aligning DNA sequences. 
+<!-- ![runa logo](misc/logo.png) -->
+<img src="misc/logo.png" alt="runa logo" width="200"/>
+
+
 
 ## Docs 
 
