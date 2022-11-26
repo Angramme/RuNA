@@ -8,18 +8,14 @@ authors = ["Kacper Ozieblowski", "Rodrigue Tavernier"]
 name = "runa"
 path = "src/lib.rs"
 
-[features]
-default = ["mem_use"]
-# mem_use = ["dep:jemallocator", "dep:jemalloc-sys", "dep:libc"]
-mem_use = ["dep:jemallocator", "dep:libc"]
-
 [dependencies]
 chrono = "0.4.23" # for printing time in benchmarks
 simple-error = "0.1.9"
-jemallocator = { version = "0.5", optional = true }
-# jemalloc-sys = { version = "0.5.2", features = ["stats"], optional = true }
-libc = { version = "0.2", optional = true }
 
 [[bench]]
 name = "bench"
+harness = false
+
+[[test]]
+name = "mem_use"
 harness = false

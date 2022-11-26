@@ -1,34 +1,12 @@
-use libc::{c_char, c_void};
-use std::ptr::{null, null_mut};
+use std::fs::read_to_string;
+use std::env;
+use runa::{dna::{DnaBlock, DnaMetricSpace as Dms}, math::*};
 
-#[global_allocator]
-static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+fn main(){
+    let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
+    let fname = gdata.clone() + "/Inst_0010000_7.adn";
+    let s = read_to_string(fname).expect("cannot read file!");
+    let block = s.parse::<DnaBlock>().expect("cannot parse file: {}");
 
-extern "C" fn write_cb(_: *mut c_void, message: *const c_char) {
-    print!("{}", String::from_utf8_lossy(unsafe {
-        std::ffi::CStr::from_ptr(message as *const i8).to_bytes()
-    }));
-}
-
-fn mem_print() {
-    unsafe { jemalloc_sys::malloc_stats_print(Some(write_cb), null_mut(), null()) }
-}
-
-fn test_closure<F>(f: F)
-where F: Fn()
-{
-    mem_print();
-    f();
-    mem_print();
-}
-
-#[cfg(feature = "mem_use")]
-fn main() {
-    test_closure(|| {
-        let _heap = Vec::<u8>::with_capacity (1024 * 128);
-    });
-}
-
-#[cfg(not(feature = "mem_use"))]
-fn main() {
+    dist_1::<Dms>(&block.0, &block.1);
 }
