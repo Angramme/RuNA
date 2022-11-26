@@ -1,7 +1,8 @@
 
 use std::time::{Duration, Instant};
+use chrono::prelude::Local;
 use seq_align::{math::*, dna::*};
-use std::fs::read_to_string;
+use seq_align::io::read_test_data;
 use std::env;
 
 fn lapse<F>(f: F) -> Duration 
@@ -12,40 +13,22 @@ where F: FnOnce()
     start.elapsed()
 }
 
-fn lapse_sequence<F>(name: &str, f: F, lim: Duration) -> Vec<(Duration, usize)>
-where F: Fn(DnaBlock)
+fn lapse_sequence<'a, F>(name: &'a str, f: F) -> impl Iterator<Item=(Duration, usize)> + 'a
+where F: Fn(DnaBlock) + 'a
 {
-    let sizes = {
-        let sizes1 = [10, 12, 13, 14, 20, 50, 100, 500].into_iter();
-        let sizes2 = (3..).map(|i| usize::pow(10, i));
-        sizes1.chain(sizes2) // this is infinite ♾, ~~waw, so cool ✨
-    };
-    let secsizes = [7, 8, 13, 45, 32, 56, 89, 76, 77]; // this is here because the endings of files differ for different sizes
-    let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
-
-    let blocks = sizes.clone()
-        .map(|size| secsizes
-            .into_iter()
-            .map(|size2| format!("{}/Inst_{:07}_{}.adn", gdata, size, size2))
-            .map(read_to_string) // try opening the file
-            .find_map(|x| x.ok()) // open first existing file
-            .expect("cannot open file!")
-        )
-        .map(|str| str.parse::<DnaBlock>().expect("cannot parse file!"));
+    let blocks = read_test_data();
     
     blocks
-        .map(|dna| lapse(|| f(dna))) // measure execution time
-        .zip(sizes)
-        .inspect(|(time, size)| println!("👍 [{}] completed call of size {} in {}s", name, size, time.as_secs_f64()))
-        .take_while(|(time, _)| *time < lim)
-        .collect()
+        .map(move |(size, dna)| (lapse(|| f(dna)), size)) // measure execution time
+        .inspect(move |(time, size)| println!("👍 [{}] completed call of size {} in {}s (time: {})", name, size, time.as_secs_f64(), Local::now().time()))
 }
 
 fn lapse_limit<F>(name: &str, f: F) -> (&str, usize) 
 where F: Fn(DnaBlock)
 {
-    let lim = lapse_sequence(name, f, Duration::from_secs(60)).iter()
-    .last().map_or(0, |(_, size)| *size);
+    let lim = lapse_sequence(name, f)
+    .take_while(|(time, _)| *time < Duration::from_secs(60))
+    .last().map_or(0, |(_, size)| size);
     
     (name, lim)
 }
@@ -63,7 +46,9 @@ fn all_limits(){
 }
 
 fn gnuplot(){
-    let times = lapse_sequence("dist_2", |DnaBlock(l, r)| {dist_2::<DnaMetricSpace>(&l, &r);}, Duration::from_secs_f64(1.0));
+    let times = 
+        lapse_sequence("dist_2", |DnaBlock(l, r)| {dist_2::<DnaMetricSpace>(&l, &r);})
+        .take_while(|(time, _)| *time < Duration::from_secs_f64(1.0));
     
     for (time, size) in times {
         print!("({},{:.6})", size, time.as_secs_f64());

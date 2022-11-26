@@ -2,6 +2,8 @@ use std::{path::Path, fs::File};
 use std::io::{BufReader, BufRead};
 use crate::dna::DnaBlock;
 use std::error::Error;
+use std::fs::read_to_string;
+use std::env;
 
 /// An iterator type that reads a file lazily and gives dna blocks contained inside.
 pub struct DnaBlocks{
@@ -41,6 +43,29 @@ impl Iterator for DnaBlocks {
             Some(buf.as_str().parse::<DnaBlock>())
         }
     }
+}
+
+pub fn read_test_data<'a>() -> impl Iterator<Item = (usize, DnaBlock)> + 'a
+{
+    let sizes = {
+        let sizes1 = [10, 12, 13, 14, 20, 50, 100, 500].into_iter();
+        let sizes2 = (3..).map(|i| usize::pow(10, i));
+        sizes1.chain(sizes2) // this is infinite ♾, ~~waw, so cool ✨
+    };
+    let secsizes = [7, 8, 13, 45, 32, 56, 89, 76, 77]; // this is here because the endings of files differ for different sizes
+    let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
+
+    let blocks = sizes.clone()
+        .map(move |size| secsizes
+            .into_iter()
+            .map(|size2| format!("{}/Inst_{:07}_{}.adn", gdata, size, size2))
+            .map(read_to_string) // try opening the file
+            .find_map(|x| x.ok()) // open first existing file
+            .expect("cannot open file!")
+        )
+        .map(|str| str.parse::<DnaBlock>().expect("cannot parse file!"));
+
+    sizes.zip(blocks)
 }
 
 #[cfg(test)]

@@ -9,6 +9,7 @@ name = "seq_align"
 path = "src/lib.rs"
 
 [dependencies]
+chrono = "0.4.23" # for printing time in benchmarks
 simple-error = "0.1.9"
 # no-panic = "0.1.16" # ensure that some functions never panic
 

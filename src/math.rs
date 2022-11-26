@@ -1,10 +1,10 @@
 //! The Math crate of the project
 
-use std::{clone::Clone, fmt::Display};
+use std::{clone::Clone, fmt::Display, collections::LinkedList};
 
 pub trait MetricSpace {
     type Item: Copy + Display;
-    type Cost: Ord + std::ops::Add<Output = Self::Cost> + Copy;
+    type Cost: Ord + std::ops::Add<Output = Self::Cost> + Copy + std::fmt::Debug;
 
     const ZEROCOST: Self::Cost;
     const INFCOST: Self::Cost;
@@ -13,6 +13,7 @@ pub trait MetricSpace {
     const INS: Self::Cost;
     fn sub(a: Self::Item, b: Self::Item) -> Self::Cost;
 }
+#[derive(Debug, PartialEq, Eq)]
 pub struct Align<M: MetricSpace>(Vec<M::Item>, Vec<M::Item>);
 
 impl<M: MetricSpace> Display for Align<M> {
@@ -26,6 +27,23 @@ impl<M: MetricSpace> Display for Align<M> {
             write!(f, "{} ", a)?;
         }
         Ok(())
+    }
+}
+
+
+pub fn cout_align<M>(x: &[M::Item], y: &[M::Item]) -> M::Cost
+where M: MetricSpace, <M as MetricSpace>::Item: PartialEq + std::fmt::Debug
+{
+    assert_eq!(x.len(), y.len(), "{:?} : {:?}", x, y);
+    if x.is_empty() && y.is_empty() { M::ZEROCOST }
+    else {
+        cout_align::<M>(&x[1..], &y[1..]) + 
+        match (x[0], y[0]) {
+            (x, y) if x == M::GAP && y == M::GAP => M::INS + M::DEL,
+            (x, _) if x == M::GAP => M::INS,
+            (_, y) if y == M::GAP => M::DEL,
+            (x, y) => M::sub(x, y)
+        } 
     }
 }
 
@@ -65,12 +83,10 @@ where M: MetricSpace,
     for i in 1..n {
         for j in 1..m {
             dp[i][j] = min(
-                dp[i-1][j-1] + M::sub(x[i-1], y[j-1]),
-                min(
-                    dp[i][j-1] + M::INS,
-                    dp[i-1][j] + M::DEL
-                )
-            )
+                dp[i-1][j-1] + M::sub(x[i-1], y[j-1]), min(
+                dp[i][j-1] + M::INS,
+                dp[i-1][j] + M::DEL
+            ))
         }
     }
     dp
@@ -86,38 +102,44 @@ where M: MetricSpace
 pub fn sol_1<M>(x: &[M::Item], y: &[M::Item], t: &[Vec<M::Cost>]) -> Align<M>
 where M: MetricSpace
 {
+    let n = x.len();
+    let m = y.len();
+    assert_eq!(n + 1, t.len());
+    assert_eq!(m + 1, t[0].len());
     let mut xb = vec![];
     let mut yb = vec![];
-    let t = &t[0..=x.len()][0..=y.len()];
 
-    let mut i = 1;
-    let mut j = 1;
-    while i <= x.len() && j <= y.len() {
-        if t[i][j] == t[i][j-1] + M::INS {
+    let mut i = n;
+    let mut j = m;
+    while i > 0 && j > 0 {
+        if t[i][j] == t[i-1][j-1] + M::sub(x[i-1], y[j-1]) {
+            xb.push(x[i-1]);
+            yb.push(y[j-1]);
+            i -= 1;
+            j -= 1;
+        } else if t[i][j] == t[i][j-1] + M::INS {
             xb.push(M::GAP);
             yb.push(y[j-1]);
-            j += 1;
-        } else if t[i][j] == t[i-1][j] + M::DEL {
+            j -= 1;
+        } else {
+            // assert_eq!(if t[i][j], t[i-1][j] + M::DEL);
             xb.push(x[i-1]);
             yb.push(M::GAP);
-            i += 1;
-        } else {
-            xb.push(x[i-1]);
-            yb.push(y[j-1]);
-            i += 1;
-            j += 1;
+            i -= 1;
         }
     }
-    while i <= x.len() {
+    while i > 0 {
         xb.push(x[i-1]);
         yb.push(M::GAP);
-        i += 1;
+        i -= 1;
     }
-    while j <= y.len() {
+    while j > 0 {
         xb.push(M::GAP);
         yb.push(y[j-1]);
-        j += 1;
+        j -= 1;
     }
+    xb.reverse();
+    yb.reverse();
     Align(xb, yb)
 }
 
@@ -156,14 +178,135 @@ where M: MetricSpace
     dp[0][y.len()]
 }
 
+pub fn coupure<M>(x: &[M::Item], y: &[M::Item]) -> usize 
+where M: MetricSpace
+{
+    use std::cmp::min;
+    let n = x.len() + 1;
+    let m = y.len() + 1;
+
+    let i_star = x.len()/2;
+    let mut t = vec![vec![M::ZEROCOST; m]; 2];
+    let mut q = vec![vec![0; m]; 2];
+
+    t[0][0] = M::ZEROCOST;
+    q[0][0] = 0;
+
+    for j in 1..m {
+        t[0][j] = t[0][j-1] + M::INS;
+        q[0][j] = j;
+    }
+
+    for i in 1..n {
+        t[1][0] = t[0][0] + M::DEL;
+        for j in 1..m {
+            let op1 = t[0][j-1] + M::sub(x[i-1], y[j-1]);
+            let op2 = t[0][j] + M::DEL;
+            let op3 = t[1][j-1] + M::INS;
+
+            t[1][j] = min(op1, min(op2, op3));
+
+            if i <= i_star { continue; }
+            if t[1][j] == op1 {
+                q[1][j] = q[0][j-1];
+            }else if t[1][j] == op2 {
+                q[1][j] = q[0][j];
+            }else{
+                q[1][j] = q[1][j-1];
+            }
+        }
+        t.swap(0, 1);
+        if i > i_star {
+            q.swap(0, 1);
+        }
+    }
+
+    q[0][y.len()]
+}
+
+pub fn mot_gaps<M>(n: usize) -> LinkedList<M::Item>
+where M: MetricSpace
+{
+    let mut ret = LinkedList::from([]);
+    for _ in 0..n { ret.push_back(M::GAP); }
+    ret
+}
+
+pub fn rm_gaps<M>(a: Vec<M::Item>) -> Vec<M::Item>
+where M: MetricSpace,  <M as MetricSpace>::Item: PartialEq
+{
+    a.into_iter().filter(|&x| x != M::GAP).collect::<Vec<_>>()
+}
+
+pub fn align_lettre_mot<M>(x: M::Item, y: &[M::Item]) -> (LinkedList<M::Item>, LinkedList<M::Item>)
+where M: MetricSpace
+{
+    let mut i = 0;
+    let mut yi = *y.get(0).expect("y is empty!");
+    for (t, &yt) in y.iter().enumerate() {
+        if M::sub(x, yt) < M::sub(x, yi) {
+            i = t;
+            yi = yt;
+        }
+        if M::sub(x, yt) == M::ZEROCOST { break; }
+    }
+    if M::sub(x, yi) < M::DEL {
+        let mut xb = mot_gaps::<M>(i);
+        xb.push_back(x);
+        xb.append(&mut mot_gaps::<M>(y.len() - 1 - i));
+        (xb, LinkedList::from_iter(y.iter().copied()))
+    } else {
+        let mut xb = mot_gaps::<M>(y.len());
+        xb.push_back(x);
+        let mut yb = LinkedList::from_iter(y.iter().copied());
+        yb.push_back(M::GAP);
+        (xb, yb)        
+    }
+} 
+
+pub fn sol_2_ll<M>(x: &[M::Item], y: &[M::Item]) -> (LinkedList<M::Item>, LinkedList<M::Item>) 
+where M: MetricSpace
+{
+    if x.len() == 1 {
+        if y.is_empty() { (LinkedList::from([x[0]]), LinkedList::from([M::GAP])) }
+        else { align_lettre_mot::<M>(x[0], y) }
+    }else if x.is_empty() || y.is_empty() {
+        if x.is_empty() {
+            (mot_gaps::<M>(y.len()), LinkedList::from_iter(y.iter().copied()))
+        } else {
+            (LinkedList::from_iter(x.iter().copied()), mot_gaps::<M>(x.len()))
+        }
+    } else {
+        let i = x.len()/2;
+        let j = coupure::<M>(x, y);
+
+        let (mut x1, mut y1) = sol_2_ll::<M>(&x[0..i], &y[0..j]);
+        let (mut x2, mut y2) = sol_2_ll::<M>(&x[i..], &y[j..]);
+
+        x1.append(&mut x2);
+        y1.append(&mut y2);
+
+        (x1, y1)
+    }
+}
+
+pub fn sol_2<M>(x: &[M::Item], y: &[M::Item]) -> Align<M> 
+where M: MetricSpace
+{
+    let (a, b) = sol_2_ll::<M>(x, y);
+    Align(Vec::from_iter(a.into_iter()), Vec::from_iter(b.into_iter()))
+}
+
 #[cfg(test)]
 mod tests {
-    use std::fs::read_to_string;
+    use std::fmt::Debug;
+    use std::{fs::read_to_string, fmt::Display};
     use std::env;
 
     use crate::dna::{DnaMetricSpace, DnaBlock, Dna};
+    use crate::math::{sol_1, dist_dp_full};
 
-    use super::prog_dyn;
+    use super::{prog_dyn, Align, cout_align};
 
     fn test_dist_3<F>(f: F, name: &str)
     where F: Fn(&Vec<Dna>, &Vec<Dna>) -> u64
@@ -188,8 +331,8 @@ mod tests {
         }
     }
 
-    fn test_dist_against<F, F2>(f: F, f2: F2, name: &str)
-    where F: Fn(&Vec<Dna>, &Vec<Dna>) -> u64, F2: Fn(&Vec<Dna>, &Vec<Dna>) -> u64
+    fn test_against<F, F2, F3, T>(f: F, f2: F2, comp: F3, name: &str)
+    where F: Fn(&Vec<Dna>, &Vec<Dna>) -> T, F2: Fn(&Vec<Dna>, &Vec<Dna>) -> T, F3: Fn(&T, &T) -> bool, T: Eq + Display + Debug
     {
         let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
         let filenames = &[
@@ -209,17 +352,23 @@ mod tests {
 
         let testcases = filenames
             .iter()
+            .inspect(|p| println!("current file: {}", p))
             .map(|p| gdata.clone() + "/" + p)
             .map(|p| read_to_string(p).expect("cannot read file!"))
             .map(|s| s.parse::<DnaBlock>().expect("cannot parse file: {}"));
 
         for DnaBlock(l, r) in testcases {
-            let d = f(&l, &r);
-            let d2 = f2(&l, &r);
-            // let d2 = super::dist_naif::<DnaMetricSpace>(&l, &r);
-            assert_eq!(d, d2, 
-                "result for {}({:?}, {:?}) should be {} but {} was given instead!", name, l, r, d2, d);
+            let a = f(&l, &r);
+            let b = f2(&l, &r);
+            assert!(comp(&a, &b), 
+                "result for {}({:?}, {:?}) should be {} but {} was given instead!", name, l, r, b, a);
         }
+    }
+
+    #[test]
+    fn cout_align_dna(){
+        use Dna::*;
+        assert_eq!(cout_align::<DnaMetricSpace>(&[A, T, Gap, A, C], &[Gap, T, G, A, C]), 4);
     }
 
     #[test]
@@ -242,15 +391,68 @@ mod tests {
             super::dist_2::<DnaMetricSpace>(l, r)
         }, "dist_2");
 
-        test_dist_against(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
+        test_against(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
             super::dist_2::<DnaMetricSpace>(l, r)
         }, |l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
             super::dist_1::<DnaMetricSpace>(l, r)
-        }, "dist_2")
+        }, |a, b| a == b, "dist_2")
+    }
+
+    #[test]
+    fn sol1(){
+        use Dna::*;
+
+        let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
+        let filenames = &[
+            (Align(vec![T, A, T, A, T, G, A, G, T, C], vec![T, A, T, Gap, T, Gap, Gap, Gap, T, Gap]), "Inst_0000010_44.adn"),
+        ];
+
+        let testcases = filenames
+            .iter()
+            .map(|(t, p)| (t, gdata.clone() + "/" + p))
+            .map(|(t, p)| (t, read_to_string(p).expect("cannot read file!")))
+            .map(|(t, s)| (t, s.parse::<DnaBlock>().expect("cannot parse file: {}")));
+
+        for (result, DnaBlock(l, r)) in testcases {
+            let t = dist_dp_full::<DnaMetricSpace>(l.as_slice(), r.as_slice());
+            for line in &t {
+                println!("truc: {:?}", line);
+            }
+            let d = sol_1::<DnaMetricSpace>(l.as_slice(), r.as_slice(), t.as_slice());
+
+            assert_eq!(d.0.iter().copied().filter(|&x| x != Gap).collect::<Vec<_>>(), l);
+            assert_eq!(d.1.iter().copied().filter(|&x| x != Gap).collect::<Vec<_>>(), r);
+
+            assert_eq!(d, *result, 
+                "result for sol_1({:?}, {:?}) should be {} but {} was given instead!", l, r, *result, d);
+        }
+    }
+
+    #[test]
+    fn sol2(){
+        use super::rm_gaps;
+        test_against(|l: &Vec<Dna>, r: &Vec<Dna>| -> Align<DnaMetricSpace>  {
+            let Align::<DnaMetricSpace>(a, b) = super::sol_2(l, r);
+            assert_eq!(rm_gaps::<DnaMetricSpace>(a.clone()), *l, "sanity check sol_2");
+            assert_eq!(rm_gaps::<DnaMetricSpace>(b.clone()), *r, "sanity check sol_2");
+            Align(a, b)
+        }, |l: &Vec<Dna>, r: &Vec<Dna>| -> Align<DnaMetricSpace> {
+            let t = super::dist_dp_full::<DnaMetricSpace>(l, r);
+            let Align::<DnaMetricSpace>(a, b) = super::sol_1(l, r, t.as_slice());
+            assert_eq!(rm_gaps::<DnaMetricSpace>(a.clone()), *l, "sanity check sol_1");
+            assert_eq!(rm_gaps::<DnaMetricSpace>(b.clone()), *r, "sanity check sol_1");
+            Align(a, b)
+        }, |a, b| {
+            let l = super::cout_align::<DnaMetricSpace>(a.0.as_slice(), a.1.as_slice());
+            let r = super::cout_align::<DnaMetricSpace>(b.0.as_slice(), b.1.as_slice());
+            if l != r { println!("cost mismatch! {} != {}", l, r); }
+            l == r
+        }, "sol_2")
     }
 
     #[test]
     fn prog_dyn_dna(){
+        // TODO: write better tests here
         let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
         let filenames = &[
             "Inst_0000010_44.adn",

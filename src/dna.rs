@@ -34,6 +34,7 @@ impl std::str::FromStr for Dna {
 }
 
 /// Metric space for Dna
+#[derive(Debug, PartialEq, Eq)]
 pub struct DnaMetricSpace;
 impl MetricSpace for DnaMetricSpace {
     type Cost = u64;
