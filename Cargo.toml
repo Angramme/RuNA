@@ -1,11 +1,11 @@
 [package]
-name = "seq_align"
+name = "RuNA"
 version = "0.1.0"
 edition = "2021"
 authors = ["Kacper Ozieblowski", "Rodrigue Tavernier"]
 
 [lib]
-name = "seq_align"
+name = "runa"
 path = "src/lib.rs"
 
 [dependencies]

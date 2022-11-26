@@ -3,6 +3,14 @@
 version = 3
 
 [[package]]
+name = "RuNA"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "simple-error",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -215,14 +223,6 @@ name = "scratch"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8132065adcfd6e02db789d9285a0deb2f3fcb04002865ab67d5fb103533898"
-
-[[package]]
-name = "seq_align"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "simple-error",
-]
 
 [[package]]
 name = "simple-error"

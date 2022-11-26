@@ -1,8 +1,8 @@
 
 use std::time::{Duration, Instant};
 use chrono::prelude::Local;
-use seq_align::{math::*, dna::*, dna::DnaMetricSpace as Dms};
-use seq_align::io::read_test_data;
+use runa::{math::*, dna::*, dna::DnaMetricSpace as Dms};
+use runa::io::read_test_data;
 use std::env;
 
 type DistFunc = fn(&[Dna], &[Dna]) -> <Dms as MetricSpace>::Cost;
