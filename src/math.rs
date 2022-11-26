@@ -206,19 +206,13 @@ where M: MetricSpace
 
             t[1][j] = min(op1, min(op2, op3));
 
-            if i <= i_star { continue; }
-            if t[1][j] == op1 {
-                q[1][j] = q[0][j-1];
-            }else if t[1][j] == op2 {
-                q[1][j] = q[0][j];
-            }else{
-                q[1][j] = q[1][j-1];
-            }
+            if i <= i_star          { continue; }
+            if t[1][j] == op1       { q[1][j] = q[0][j-1]; }
+            else if t[1][j] == op2  { q[1][j] = q[0][j]; }
+            else                    { q[1][j] = q[1][j-1]; }
         }
         t.swap(0, 1);
-        if i > i_star {
-            q.swap(0, 1);
-        }
+        if i > i_star { q.swap(0, 1); }
     }
 
     q[0][y.len()]
@@ -241,52 +235,36 @@ where M: MetricSpace,  <M as MetricSpace>::Item: PartialEq
 pub fn align_lettre_mot<M>(x: M::Item, y: &[M::Item]) -> (LinkedList<M::Item>, LinkedList<M::Item>)
 where M: MetricSpace
 {
-    let mut i = 0;
-    let mut yi = *y.get(0).expect("y is empty!");
-    for (t, &yt) in y.iter().enumerate() {
-        if M::sub(x, yt) < M::sub(x, yi) {
-            i = t;
-            yi = yt;
-        }
-        if M::sub(x, yt) == M::ZEROCOST { break; }
-    }
-    if M::sub(x, yi) < M::DEL {
-        let mut xb = mot_gaps::<M>(i);
-        xb.push_back(x);
-        xb.append(&mut mot_gaps::<M>(y.len() - 1 - i));
-        (xb, LinkedList::from_iter(y.iter().copied()))
-    } else {
-        let mut xb = mot_gaps::<M>(y.len());
-        xb.push_back(x);
-        let mut yb = LinkedList::from_iter(y.iter().copied());
-        yb.push_back(M::GAP);
-        (xb, yb)        
-    }
+    let (i, _) = y
+        .iter()
+        .enumerate()
+        .min_by_key(|&(_, &yk)| M::sub(x, yk))
+        .expect("y is empty!");
+    let mut xb = mot_gaps::<M>(i);
+    xb.push_back(x);
+    xb.append(&mut mot_gaps::<M>(y.len() - 1 - i));
+    (xb, LinkedList::from_iter(y.iter().copied()))
 } 
 
 pub fn sol_2_ll<M>(x: &[M::Item], y: &[M::Item]) -> (LinkedList<M::Item>, LinkedList<M::Item>) 
 where M: MetricSpace
 {
-    if x.len() == 1 {
-        if y.is_empty() { (LinkedList::from([x[0]]), LinkedList::from([M::GAP])) }
-        else { align_lettre_mot::<M>(x[0], y) }
-    }else if x.is_empty() || y.is_empty() {
-        if x.is_empty() {
-            (mot_gaps::<M>(y.len()), LinkedList::from_iter(y.iter().copied()))
-        } else {
-            (LinkedList::from_iter(x.iter().copied()), mot_gaps::<M>(x.len()))
+    match (x.len(), y.len()) {
+        (0, _) => (mot_gaps::<M>(y.len()), LinkedList::from_iter(y.iter().copied())),
+        (_, 0) => (LinkedList::from_iter(x.iter().copied()), mot_gaps::<M>(x.len())),
+        (1, _) => align_lettre_mot::<M>(x[0], y),
+        (_, _) => {
+            let i = x.len()/2;
+            let j = coupure::<M>(x, y);
+    
+            let (mut x1, mut y1) = sol_2_ll::<M>(&x[0..i], &y[0..j]);
+            let (mut x2, mut y2) = sol_2_ll::<M>(&x[i..], &y[j..]);
+    
+            x1.append(&mut x2);
+            y1.append(&mut y2);
+    
+            (x1, y1)
         }
-    } else {
-        let i = x.len()/2;
-        let j = coupure::<M>(x, y);
-
-        let (mut x1, mut y1) = sol_2_ll::<M>(&x[0..i], &y[0..j]);
-        let (mut x2, mut y2) = sol_2_ll::<M>(&x[i..], &y[j..]);
-
-        x1.append(&mut x2);
-        y1.append(&mut y2);
-
-        (x1, y1)
     }
 }
 
