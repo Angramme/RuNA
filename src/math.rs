@@ -281,7 +281,7 @@ mod tests {
     use std::{fs::read_to_string, fmt::Display};
     use std::env;
 
-    use crate::dna::{DnaMetricSpace, DnaBlock, Dna};
+    use crate::dna::{DnaMetricSpace as Dms, DnaBlock, Dna};
     use crate::math::{sol_1, dist_dp_full};
 
     use super::{prog_dyn, Align, cout_align};
@@ -318,14 +318,20 @@ mod tests {
             "Inst_0000010_7.adn",
             "Inst_0000010_8.adn",
             "Inst_0000012_13.adn",
-            "Inst_0000012_56.adn",
             "Inst_0000012_32.adn",
+            "Inst_0000012_56.adn",
+            "Inst_0000013_45.adn",
             "Inst_0000013_56.adn",
             "Inst_0000013_89.adn",
+            "Inst_0000014_23.adn",
+            "Inst_0000014_7.adn",
+            "Inst_0000014_83.adn",
             "Inst_0000015_2.adn",
             "Inst_0000015_4.adn",
-            "Inst_0000020_8.adn",
+            "Inst_0000015_76.adn",
             "Inst_0000020_17.adn",
+            "Inst_0000020_32.adn",
+            "Inst_0000020_8.adn",
         ];
 
         let testcases = filenames
@@ -346,33 +352,33 @@ mod tests {
     #[test]
     fn cout_align_dna(){
         use Dna::*;
-        assert_eq!(cout_align::<DnaMetricSpace>(&[A, T, Gap, A, C], &[Gap, T, G, A, C]), 4);
+        assert_eq!(cout_align::<Dms>(&[A, T, Gap, A, C], &[Gap, T, G, A, C]), 4);
     }
 
     #[test]
     fn dist_naif_dna(){
         test_dist_3(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
-            super::dist_naif::<DnaMetricSpace>(l, r)
+            super::dist_naif::<Dms>(l, r)
         }, "dist_naif");
     }
 
     #[test]
     fn dist_1_dna(){
         test_dist_3(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
-            super::dist_1::<DnaMetricSpace>(l, r)
+            super::dist_1::<Dms>(l, r)
         }, "dist_1");
     }
 
     #[test]
     fn dist_2_dna(){
         test_dist_3(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
-            super::dist_2::<DnaMetricSpace>(l, r)
+            super::dist_2::<Dms>(l, r)
         }, "dist_2");
 
         test_against(|l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
-            super::dist_2::<DnaMetricSpace>(l, r)
+            super::dist_2::<Dms>(l, r)
         }, |l: &Vec<Dna>, r: &Vec<Dna>| -> u64 {
-            super::dist_1::<DnaMetricSpace>(l, r)
+            super::dist_1::<Dms>(l, r)
         }, |a, b| a == b, "dist_2")
     }
 
@@ -392,11 +398,11 @@ mod tests {
             .map(|(t, s)| (t, s.parse::<DnaBlock>().expect("cannot parse file: {}")));
 
         for (result, DnaBlock(l, r)) in testcases {
-            let t = dist_dp_full::<DnaMetricSpace>(l.as_slice(), r.as_slice());
+            let t = dist_dp_full::<Dms>(l.as_slice(), r.as_slice());
             for line in &t {
                 println!("truc: {:?}", line);
             }
-            let d = sol_1::<DnaMetricSpace>(l.as_slice(), r.as_slice(), t.as_slice());
+            let d = sol_1::<Dms>(l.as_slice(), r.as_slice(), t.as_slice());
 
             assert_eq!(d.0.iter().copied().filter(|&x| x != Gap).collect::<Vec<_>>(), l);
             assert_eq!(d.1.iter().copied().filter(|&x| x != Gap).collect::<Vec<_>>(), r);
@@ -409,20 +415,20 @@ mod tests {
     #[test]
     fn sol2(){
         use super::rm_gaps;
-        test_against(|l: &Vec<Dna>, r: &Vec<Dna>| -> Align<DnaMetricSpace>  {
-            let Align::<DnaMetricSpace>(a, b) = super::sol_2(l, r);
-            assert_eq!(rm_gaps::<DnaMetricSpace>(a.clone()), *l, "sanity check sol_2");
-            assert_eq!(rm_gaps::<DnaMetricSpace>(b.clone()), *r, "sanity check sol_2");
+        test_against(|l: &Vec<Dna>, r: &Vec<Dna>| -> Align<Dms>  {
+            let Align::<Dms>(a, b) = super::sol_2(l, r);
+            assert_eq!(rm_gaps::<Dms>(a.clone()), *l, "sanity check sol_2");
+            assert_eq!(rm_gaps::<Dms>(b.clone()), *r, "sanity check sol_2");
             Align(a, b)
-        }, |l: &Vec<Dna>, r: &Vec<Dna>| -> Align<DnaMetricSpace> {
-            let t = super::dist_dp_full::<DnaMetricSpace>(l, r);
-            let Align::<DnaMetricSpace>(a, b) = super::sol_1(l, r, t.as_slice());
-            assert_eq!(rm_gaps::<DnaMetricSpace>(a.clone()), *l, "sanity check sol_1");
-            assert_eq!(rm_gaps::<DnaMetricSpace>(b.clone()), *r, "sanity check sol_1");
+        }, |l: &Vec<Dna>, r: &Vec<Dna>| -> Align<Dms> {
+            let t = super::dist_dp_full::<Dms>(l, r);
+            let Align::<Dms>(a, b) = super::sol_1(l, r, t.as_slice());
+            assert_eq!(rm_gaps::<Dms>(a.clone()), *l, "sanity check sol_1");
+            assert_eq!(rm_gaps::<Dms>(b.clone()), *r, "sanity check sol_1");
             Align(a, b)
         }, |a, b| {
-            let l = super::cout_align::<DnaMetricSpace>(a.0.as_slice(), a.1.as_slice());
-            let r = super::cout_align::<DnaMetricSpace>(b.0.as_slice(), b.1.as_slice());
+            let l = super::cout_align::<Dms>(a.0.as_slice(), a.1.as_slice());
+            let r = super::cout_align::<Dms>(b.0.as_slice(), b.1.as_slice());
             if l != r { println!("cost mismatch! {} != {}", l, r); }
             l == r
         }, "sol_2")
@@ -444,7 +450,7 @@ mod tests {
             .map(|s| s.parse::<DnaBlock>().expect("cannot parse file: {}"));
 
         for DnaBlock(l, r) in testcases {
-            let (d, al) = prog_dyn::<DnaMetricSpace>(&l, &r);
+            let (d, al) = prog_dyn::<Dms>(&l, &r);
             println!("distance is {} and the optimal alignement is: {}", d, al);
         }
     }
