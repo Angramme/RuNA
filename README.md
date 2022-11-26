@@ -1,6 +1,6 @@
 
 
-## SeqAlign
+## RuNA
 
 This is a library for aligning DNA sequences. 
 
