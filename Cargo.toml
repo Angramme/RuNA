@@ -14,5 +14,5 @@ simple-error = "0.1.9"
 # no-panic = "0.1.16" # ensure that some functions never panic
 
 [[bench]]
-name = "dist"
+name = "bench"
 harness = false

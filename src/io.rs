@@ -47,12 +47,13 @@ impl Iterator for DnaBlocks {
 
 pub fn read_test_data<'a>() -> impl Iterator<Item = (usize, DnaBlock)> + 'a
 {
-    let sizes = {
-        let sizes1 = [10, 12, 13, 14, 20, 50, 100, 500].into_iter();
-        let sizes2 = (3..).map(|i| usize::pow(10, i));
-        sizes1.chain(sizes2) // this is infinite ♾, ~~waw, so cool ✨
-    };
-    let secsizes = [7, 8, 13, 45, 32, 56, 89, 76, 77]; // this is here because the endings of files differ for different sizes
+    // let sizes = {
+    //     let sizes1 = [10, 12, 13, 14, 20, 50, 100, 500].into_iter();
+    //     let sizes2 = (3..=5).map(|i| usize::pow(10, i));
+    //     sizes1.chain(sizes2)
+    // };
+    let sizes = [10, 12, 13, 14, 20, 50, 100, 500, 1000, 2000, 3000, 5000, 8000, 10000, 15000, 20000, 50000, 100000].into_iter();
+    let secsizes = [7, 8, 13, 45, 32, 56, 89, 76, 77, 3, 20, 6]; // this is here because the endings of files differ for different sizes
     let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
 
     let blocks = sizes.clone()

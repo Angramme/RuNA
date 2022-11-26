@@ -99,7 +99,13 @@ where M: MetricSpace
     dp[x.len()][y.len()]
 }
 
-pub fn sol_1<M>(x: &[M::Item], y: &[M::Item], t: &[Vec<M::Cost>]) -> Align<M>
+pub fn sol_1<M>(x: &[M::Item], y: &[M::Item]) -> Align<M>
+where M: MetricSpace
+{
+    let t = dist_dp_full::<M>(x, y);
+    sol_1_tab(x, y, t.as_slice())
+}
+pub fn sol_1_tab<M>(x: &[M::Item], y: &[M::Item], t: &[Vec<M::Cost>]) -> Align<M>
 where M: MetricSpace
 {
     let n = x.len();
@@ -147,7 +153,7 @@ pub fn prog_dyn<M>(x: &[M::Item], y: &[M::Item]) -> (M::Cost, Align<M>)
 where M: MetricSpace
 {
     let dp = dist_dp_full::<M>(x, y);
-    (dp[x.len()][y.len()], sol_1::<M>(x, y, dp.as_slice()))
+    (dp[x.len()][y.len()], sol_1_tab::<M>(x, y, dp.as_slice()))
 }
 
 pub fn dist_2<M>(x: &[M::Item], y: &[M::Item]) -> M::Cost 
@@ -282,7 +288,7 @@ mod tests {
     use std::env;
 
     use crate::dna::{DnaMetricSpace as Dms, DnaBlock, Dna};
-    use crate::math::{sol_1, dist_dp_full};
+    use crate::math::{sol_1_tab, dist_dp_full};
 
     use super::{prog_dyn, Align, cout_align};
 
@@ -400,9 +406,9 @@ mod tests {
         for (result, DnaBlock(l, r)) in testcases {
             let t = dist_dp_full::<Dms>(l.as_slice(), r.as_slice());
             for line in &t {
-                println!("truc: {:?}", line);
+                println!("tableau: {:?}", line);
             }
-            let d = sol_1::<Dms>(l.as_slice(), r.as_slice(), t.as_slice());
+            let d = sol_1_tab::<Dms>(l.as_slice(), r.as_slice(), t.as_slice());
 
             assert_eq!(d.0.iter().copied().filter(|&x| x != Gap).collect::<Vec<_>>(), l);
             assert_eq!(d.1.iter().copied().filter(|&x| x != Gap).collect::<Vec<_>>(), r);
@@ -421,8 +427,7 @@ mod tests {
             assert_eq!(rm_gaps::<Dms>(b.clone()), *r, "sanity check sol_2");
             Align(a, b)
         }, |l: &Vec<Dna>, r: &Vec<Dna>| -> Align<Dms> {
-            let t = super::dist_dp_full::<Dms>(l, r);
-            let Align::<Dms>(a, b) = super::sol_1(l, r, t.as_slice());
+            let Align::<Dms>(a, b) = super::sol_1(l, r);
             assert_eq!(rm_gaps::<Dms>(a.clone()), *l, "sanity check sol_1");
             assert_eq!(rm_gaps::<Dms>(b.clone()), *r, "sanity check sol_1");
             Align(a, b)
