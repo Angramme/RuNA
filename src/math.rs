@@ -389,6 +389,64 @@ mod tests {
     }
 
     #[test]
+    fn sol1_2(){ // sanity tests
+        use super::{dist_2, sol_1, sol_2, rm_gaps};
+        let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
+        let filenames = &[
+            "Inst_0000010_44.adn",
+            "Inst_0000010_7.adn",
+            "Inst_0000010_8.adn",
+            "Inst_0000012_13.adn",
+            "Inst_0000012_32.adn",
+            "Inst_0000012_56.adn",
+            "Inst_0000013_45.adn",
+            "Inst_0000013_56.adn",
+            "Inst_0000013_89.adn",
+            "Inst_0000014_23.adn",
+            "Inst_0000014_7.adn",
+            "Inst_0000014_83.adn",
+            "Inst_0000015_2.adn",
+            "Inst_0000015_4.adn",
+            "Inst_0000015_76.adn",
+            "Inst_0000020_17.adn",
+            "Inst_0000020_32.adn",
+            "Inst_0000020_8.adn",
+            "Inst_0000050_77.adn",
+            "Inst_0000050_9.adn",
+            "Inst_0000100_3.adn",
+            "Inst_0000100_44.adn",
+            "Inst_0000100_7.adn",
+            "Inst_0000500_3.adn",
+            "Inst_0000500_8.adn",
+            "Inst_0000500_88.adn",
+        ];
+
+        let testcases = filenames
+            .iter()
+            .map(|p| gdata.clone() + "/" + p)
+            .map(|p| read_to_string(p).expect("cannot read file!"))
+            .map(|s| s.parse::<DnaBlock>().expect("cannot parse file: {}"))
+            .map(|b| (dist_2::<Dms>(b.0.as_slice(), b.1.as_slice()), b))
+            .map(|(a, b)| (b, a));
+
+        for (DnaBlock(l, r), d) in testcases {
+            let al = sol_1::<Dms>(l.as_slice(), r.as_slice());
+            assert_eq!(rm_gaps::<Dms>(al.0.clone()), *l, "sanity check sol_1");
+            assert_eq!(rm_gaps::<Dms>(al.1.clone()), *r, "sanity check sol_1");
+            let x = cout_align::<Dms>(al.0.as_slice(), al.1.as_slice());
+            assert_eq!(x, d);
+            
+            ///////////////
+            
+            let al = sol_2::<Dms>(l.as_slice(), r.as_slice());
+            assert_eq!(rm_gaps::<Dms>(al.0.clone()), *l, "sanity check sol_2");
+            assert_eq!(rm_gaps::<Dms>(al.1.clone()), *r, "sanity check sol_2");
+            let x = cout_align::<Dms>(al.0.as_slice(), al.1.as_slice());
+            assert_eq!(x, d);
+        }
+    }
+
+    #[test]
     fn sol1(){
         use Dna::*;
 
