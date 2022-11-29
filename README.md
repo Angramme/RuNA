@@ -19,6 +19,16 @@ run all tests
 cargo test 
 ```
 
+Performance limits of all functions:
+```
+cargo bench
+```
+Generate performance graphs for (in this example dist_2, but you can switch it to a different function)
+```
+cargo bench -- gnuplot dist_2
+```
+
+
 test memory usage of a function (for example dist_2)
 
 ```

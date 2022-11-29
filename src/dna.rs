@@ -1,3 +1,5 @@
+//! The crate containing information specific to Dna sequences, and the DNA metric space
+
 use simple_error::{SimpleError, bail};
 use std::error::Error;
 use std::str::FromStr;

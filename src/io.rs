@@ -1,3 +1,5 @@
+//! Input/Output library of the crate.
+
 use crate::dna::DnaBlock;
 use std::error::Error;
 use std::fs::read_to_string;

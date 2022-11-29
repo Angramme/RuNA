@@ -1,5 +1,5 @@
-//! # Herro 
-//! this is crate!
+//! # RuNA
+//! RuNA is a library for aligning DNA sequences. 
 
 pub mod math;
 pub mod dna;

@@ -1,3 +1,4 @@
+//! Various benchmarks of the crate
 
 use std::time::{Duration, Instant};
 use chrono::prelude::Local;
