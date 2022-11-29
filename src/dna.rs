@@ -5,6 +5,7 @@ use std::fmt::Display;
 
 use crate::math::*;
 
+/// Dna element, an item in a dna sequence
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Dna {
     A, C, T, G, Gap
@@ -33,7 +34,7 @@ impl std::str::FromStr for Dna {
     }
 }
 
-/// Metric space for Dna
+/// Metric space defined for dna sequences, it is defined as mentioned in the assignement
 #[derive(Debug, PartialEq, Eq)]
 pub struct DnaMetricSpace;
 impl MetricSpace for DnaMetricSpace {

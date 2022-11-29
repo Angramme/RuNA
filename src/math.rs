@@ -2,6 +2,15 @@
 
 use std::{clone::Clone, fmt::Display, collections::LinkedList};
 
+/// A structure meant to be passed as a generic parameter to other functions.
+/// it is meant to ensapsulate all the information related to 
+/// - the types used 
+/// (notice that the types might be anything, you could for example have sequences of strings,
+/// all you have to do is to define a MetricSpace and the rest of the code is guaranteed to work), 
+/// - the distance constants 
+/// - the usual values for zero and infinity.
+/// This makes it possible to use multiple MetricSpaces at once in the same program
+/// and makes the distance functions reusable with a large variety of sequence types.
 pub trait MetricSpace {
     type Item: Copy + Display;
     type Cost: Ord + std::ops::Add<Output = Self::Cost> + Copy + std::fmt::Debug;
@@ -30,7 +39,7 @@ impl<M: MetricSpace> Display for Align<M> {
     }
 }
 
-
+/// Calculate the cost of the alignment (x, y) passed as parameter
 pub fn cout_align<M>(x: &[M::Item], y: &[M::Item]) -> M::Cost
 where M: MetricSpace, <M as MetricSpace>::Item: PartialEq + std::fmt::Debug
 {
@@ -48,12 +57,14 @@ where M: MetricSpace, <M as MetricSpace>::Item: PartialEq + std::fmt::Debug
 }
 
 /// Calculate distance between sequences x and y in the MetricSpace M
+/// O(exp(n)) time and memory
 pub fn dist_naif<M>(x: &[M::Item], y: &[M::Item]) -> M::Cost
 where M: MetricSpace
 {
     dist_naif_rec::<M, _>(x.iter().copied(), y.iter().copied(), M::ZEROCOST, M::INFCOST)
 }
 
+/// auxiliary function for dist_naif
 pub fn dist_naif_rec<T, I>(mut xi: I, mut yi: I, c: T::Cost, mut dist: T::Cost) -> T::Cost
 where T: MetricSpace, I: Iterator<Item = T::Item> + Clone
 {
@@ -66,6 +77,7 @@ where T: MetricSpace, I: Iterator<Item = T::Item> + Clone
     dist
 }
 
+/// Compute the 2D dynamic-programming table for the sequences x and y
 pub fn dist_dp_full<M>(x: &[M::Item], y: &[M::Item]) -> Vec<Vec<M::Cost>>
 where M: MetricSpace, 
 {
@@ -92,6 +104,7 @@ where M: MetricSpace,
     dp
 }
 
+/// Compute distance using a 2D table O(n^2) time O(n^2) memory 
 pub fn dist_1<M>(x: &[M::Item], y: &[M::Item]) -> M::Cost 
 where M: MetricSpace
 {
@@ -99,12 +112,15 @@ where M: MetricSpace
     dp[x.len()][y.len()]
 }
 
+/// Compute the optimal alignment using a 2D table O(n^2) time and memory
 pub fn sol_1<M>(x: &[M::Item], y: &[M::Item]) -> Align<M>
 where M: MetricSpace
 {
     let t = dist_dp_full::<M>(x, y);
     sol_1_tab(x, y, t.as_slice())
 }
+
+/// Same as sol_1 but you pass in the table manually
 pub fn sol_1_tab<M>(x: &[M::Item], y: &[M::Item], t: &[Vec<M::Cost>]) -> Align<M>
 where M: MetricSpace
 {
@@ -149,6 +165,7 @@ where M: MetricSpace
     Align(xb, yb)
 }
 
+/// Calculate the optimal alignment and the distance between the sequences at once
 pub fn prog_dyn<M>(x: &[M::Item], y: &[M::Item]) -> (M::Cost, Align<M>)
 where M: MetricSpace
 {
@@ -156,6 +173,7 @@ where M: MetricSpace
     (dp[x.len()][y.len()], sol_1_tab::<M>(x, y, dp.as_slice()))
 }
 
+/// Calculate the distance between two sequences O(n^2) time O(n) memory
 pub fn dist_2<M>(x: &[M::Item], y: &[M::Item]) -> M::Cost 
 where M: MetricSpace
 {
@@ -184,6 +202,8 @@ where M: MetricSpace
     dp[0][y.len()]
 }
 
+/// Calculate the optimal cutting point in sequence y for the corresponding 
+/// cutting point |x|/2 in sequence x 
 pub fn coupure<M>(x: &[M::Item], y: &[M::Item]) -> usize 
 where M: MetricSpace
 {
@@ -224,6 +244,7 @@ where M: MetricSpace
     q[0][y.len()]
 }
 
+/// Generate a word composed of gaps of length n
 pub fn mot_gaps<M>(n: usize) -> LinkedList<M::Item>
 where M: MetricSpace
 {
@@ -232,12 +253,15 @@ where M: MetricSpace
     ret
 }
 
+
+/// Remove all gaps from the sequence
 pub fn rm_gaps<M>(a: Vec<M::Item>) -> Vec<M::Item>
 where M: MetricSpace,  <M as MetricSpace>::Item: PartialEq
 {
     a.into_iter().filter(|&x| x != M::GAP).collect::<Vec<_>>()
 }
 
+/// Align a letter with a word in the optimal way. O(n) time
 pub fn align_lettre_mot<M>(x: M::Item, y: &[M::Item]) -> (LinkedList<M::Item>, LinkedList<M::Item>)
 where M: MetricSpace
 {
@@ -252,6 +276,7 @@ where M: MetricSpace
     (xb, LinkedList::from_iter(y.iter().copied()))
 } 
 
+/// Auxiliary function for sol_2 O(n^2) time and O((n+m)log n) memory
 pub fn sol_2_ll<M>(x: &[M::Item], y: &[M::Item]) -> (LinkedList<M::Item>, LinkedList<M::Item>) 
 where M: MetricSpace
 {
@@ -274,6 +299,7 @@ where M: MetricSpace
     }
 }
 
+/// Compute the alignement of two sequences in O(n^2) time and O((n+m)log n) memory
 pub fn sol_2<M>(x: &[M::Item], y: &[M::Item]) -> Align<M> 
 where M: MetricSpace
 {

@@ -4,7 +4,7 @@ use std::fs::read_to_string;
 use std::env;
 
 
-
+/// read a test instance of a given size 
 pub fn read_test_inst_of_size(size: usize) -> Result<DnaBlock, Box<dyn Error>>
 {
     let secsizes = [7, 8, 13, 45, 32, 56, 89, 76, 77, 3, 20, 6];
@@ -18,6 +18,7 @@ pub fn read_test_inst_of_size(size: usize) -> Result<DnaBlock, Box<dyn Error>>
         .parse::<DnaBlock>()
 }
 
+/// read test instance by filename
 pub fn read_test_inst(filename: &str) -> Result<DnaBlock, Box<dyn Error>>
 {
     let gdata = env::var("GENOME_DATA")?;
@@ -26,6 +27,7 @@ pub fn read_test_inst(filename: &str) -> Result<DnaBlock, Box<dyn Error>>
     f.parse::<DnaBlock>()
 }
 
+/// read all test instances lazily, indeed it will load the instances in memory on demand
 pub fn read_test_insts_all<'a>() -> impl Iterator<Item = (usize, DnaBlock)> + 'a
 {
     let filenames = [        
@@ -106,6 +108,7 @@ pub fn read_test_insts_all<'a>() -> impl Iterator<Item = (usize, DnaBlock)> + 'a
     sizes.zip(blocks)
 }
 
+/// read test instances lazily, indeed it will load the instances in memory on demand. The sizes of the instances will be unique.
 pub fn read_test_insts_by_size<'a>() -> impl Iterator<Item = (usize, DnaBlock)> + 'a
 {
     let sizes = [10, 12, 13, 14, 20, 50, 100, 500, 1000, 2000, 3000, 5000, 8000, 10000, 15000, 20000, 50000, 100000].into_iter();
