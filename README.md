@@ -30,7 +30,6 @@ cargo bench -- gnuplot dist_2
 
 
 test memory usage of a function (for example dist_2)
-
 ```
 cargo build --test mem_use
 GENOME_DATA=? valgrind --tool=massif ???/mem_use-? dist_2
