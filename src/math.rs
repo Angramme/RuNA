@@ -284,18 +284,17 @@ where M: MetricSpace
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
-    use std::{fs::read_to_string, fmt::Display};
-    use std::env;
+    use std::fmt::Display;
 
     use crate::dna::{DnaMetricSpace as Dms, DnaBlock, Dna};
-    use crate::math::{sol_1_tab, dist_dp_full};
+    use crate::io::{read_test_inst, read_test_insts_all};
+    use crate::math::{sol_1_tab, dist_dp_full, rm_gaps};
 
-    use super::{prog_dyn, Align, cout_align};
+    use super::{Align, cout_align};
 
-    fn test_dist_3<F>(f: F, name: &str)
+    fn test_dist_3<F>(f: F, name: &str) // manual tests
     where F: Fn(&Vec<Dna>, &Vec<Dna>) -> u64
     {
-        let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
         let filenames = &[
             (10, "Inst_0000010_44.adn"),
             (8, "Inst_0000010_7.adn"),
@@ -304,9 +303,7 @@ mod tests {
 
         let testcases = filenames
             .iter()
-            .map(|(t, p)| (t, gdata.clone() + "/" + p))
-            .map(|(t, p)| (t, read_to_string(p).expect("cannot read file!")))
-            .map(|(t, s)| (t, s.parse::<DnaBlock>().expect("cannot parse file: {}")));
+            .map(|(r, p)| (r, read_test_inst(p).expect("cannot read instance!")));
 
         for (result, DnaBlock(l, r)) in testcases {
             let d = f(&l, &r);
@@ -318,40 +315,15 @@ mod tests {
     fn test_against<F, F2, F3, T>(f: F, f2: F2, comp: F3, name: &str)
     where F: Fn(&Vec<Dna>, &Vec<Dna>) -> T, F2: Fn(&Vec<Dna>, &Vec<Dna>) -> T, F3: Fn(&T, &T) -> bool, T: Eq + Display + Debug
     {
-        let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
-        let filenames = &[
-            "Inst_0000010_44.adn",
-            "Inst_0000010_7.adn",
-            "Inst_0000010_8.adn",
-            "Inst_0000012_13.adn",
-            "Inst_0000012_32.adn",
-            "Inst_0000012_56.adn",
-            "Inst_0000013_45.adn",
-            "Inst_0000013_56.adn",
-            "Inst_0000013_89.adn",
-            "Inst_0000014_23.adn",
-            "Inst_0000014_7.adn",
-            "Inst_0000014_83.adn",
-            "Inst_0000015_2.adn",
-            "Inst_0000015_4.adn",
-            "Inst_0000015_76.adn",
-            "Inst_0000020_17.adn",
-            "Inst_0000020_32.adn",
-            "Inst_0000020_8.adn",
-        ];
-
-        let testcases = filenames
-            .iter()
-            .inspect(|p| println!("current file: {}", p))
-            .map(|p| gdata.clone() + "/" + p)
-            .map(|p| read_to_string(p).expect("cannot read file!"))
-            .map(|s| s.parse::<DnaBlock>().expect("cannot parse file: {}"));
+        let testcases = read_test_insts_all()
+            .take_while(|&(size, _)| size <= 20)
+            .map(|(_, b)| b); // this will read the files one by one
 
         for DnaBlock(l, r) in testcases {
             let a = f(&l, &r);
             let b = f2(&l, &r);
             assert!(comp(&a, &b), 
-                "result for {}({:?}, {:?}) should be {} but {} was given instead!", name, l, r, b, a);
+                "result mismatch! : {}({:?}, {:?}) = {} != {} = reference(..., ...)", name, l, r, a, b);
         }
     }
 
@@ -391,75 +363,40 @@ mod tests {
     #[test]
     fn sol1_2(){ // sanity tests
         use super::{dist_2, sol_1, sol_2, rm_gaps};
-        let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
-        let filenames = &[
-            "Inst_0000010_44.adn",
-            "Inst_0000010_7.adn",
-            "Inst_0000010_8.adn",
-            "Inst_0000012_13.adn",
-            "Inst_0000012_32.adn",
-            "Inst_0000012_56.adn",
-            "Inst_0000013_45.adn",
-            "Inst_0000013_56.adn",
-            "Inst_0000013_89.adn",
-            "Inst_0000014_23.adn",
-            "Inst_0000014_7.adn",
-            "Inst_0000014_83.adn",
-            "Inst_0000015_2.adn",
-            "Inst_0000015_4.adn",
-            "Inst_0000015_76.adn",
-            "Inst_0000020_17.adn",
-            "Inst_0000020_32.adn",
-            "Inst_0000020_8.adn",
-            "Inst_0000050_77.adn",
-            "Inst_0000050_9.adn",
-            "Inst_0000100_3.adn",
-            "Inst_0000100_44.adn",
-            "Inst_0000100_7.adn",
-            "Inst_0000500_3.adn",
-            "Inst_0000500_8.adn",
-            "Inst_0000500_88.adn",
-        ];
 
-        let testcases = filenames
-            .iter()
-            .map(|p| gdata.clone() + "/" + p)
-            .map(|p| read_to_string(p).expect("cannot read file!"))
-            .map(|s| s.parse::<DnaBlock>().expect("cannot parse file: {}"))
+        let testcases = read_test_insts_all() // this does not read all files at once
+            .take_while(|&(size, _)| size <= 500)
+            .map(|(_, b)| b)
             .map(|b| (dist_2::<Dms>(b.0.as_slice(), b.1.as_slice()), b))
             .map(|(a, b)| (b, a));
 
         for (DnaBlock(l, r), d) in testcases {
             let al = sol_1::<Dms>(l.as_slice(), r.as_slice());
-            assert_eq!(rm_gaps::<Dms>(al.0.clone()), *l, "sanity check sol_1");
-            assert_eq!(rm_gaps::<Dms>(al.1.clone()), *r, "sanity check sol_1");
+            assert_eq!(rm_gaps::<Dms>(al.0.clone()), *l, "some letters 🍪 got eaten in sol_1");
+            assert_eq!(rm_gaps::<Dms>(al.1.clone()), *r, "some letters 🍪 got eaten in sol_1");
             let x = cout_align::<Dms>(al.0.as_slice(), al.1.as_slice());
             assert_eq!(x, d);
             
             ///////////////
             
             let al = sol_2::<Dms>(l.as_slice(), r.as_slice());
-            assert_eq!(rm_gaps::<Dms>(al.0.clone()), *l, "sanity check sol_2");
-            assert_eq!(rm_gaps::<Dms>(al.1.clone()), *r, "sanity check sol_2");
+            assert_eq!(rm_gaps::<Dms>(al.0.clone()), *l, "some letters 🍪 got eaten in sol_2");
+            assert_eq!(rm_gaps::<Dms>(al.1.clone()), *r, "some letters 🍪 got eaten in sol_2");
             let x = cout_align::<Dms>(al.0.as_slice(), al.1.as_slice());
             assert_eq!(x, d);
         }
     }
 
     #[test]
-    fn sol1(){
+    fn sol1(){ // additional manual tests
         use Dna::*;
-
-        let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
         let filenames = &[
             (Align(vec![T, A, T, A, T, G, A, G, T, C], vec![T, A, T, Gap, T, Gap, Gap, Gap, T, Gap]), "Inst_0000010_44.adn"),
         ];
 
         let testcases = filenames
             .iter()
-            .map(|(t, p)| (t, gdata.clone() + "/" + p))
-            .map(|(t, p)| (t, read_to_string(p).expect("cannot read file!")))
-            .map(|(t, s)| (t, s.parse::<DnaBlock>().expect("cannot parse file: {}")));
+            .map(|(t, p)| (t, read_test_inst(p).expect("couldn't read instance!")));
 
         for (result, DnaBlock(l, r)) in testcases {
             let t = dist_dp_full::<Dms>(l.as_slice(), r.as_slice());
@@ -468,8 +405,8 @@ mod tests {
             }
             let d = sol_1_tab::<Dms>(l.as_slice(), r.as_slice(), t.as_slice());
 
-            assert_eq!(d.0.iter().copied().filter(|&x| x != Gap).collect::<Vec<_>>(), l);
-            assert_eq!(d.1.iter().copied().filter(|&x| x != Gap).collect::<Vec<_>>(), r);
+            assert_eq!(rm_gaps::<Dms>(d.0.clone()), *l, "some letters 🍪 got eaten in sol_1");
+            assert_eq!(rm_gaps::<Dms>(d.1.clone()), *r, "some letters 🍪 got eaten in sol_1");
 
             assert_eq!(d, *result, 
                 "result for sol_1({:?}, {:?}) should be {} but {} was given instead!", l, r, *result, d);
@@ -481,40 +418,23 @@ mod tests {
         use super::rm_gaps;
         test_against(|l: &Vec<Dna>, r: &Vec<Dna>| -> Align<Dms>  {
             let Align::<Dms>(a, b) = super::sol_2(l, r);
-            assert_eq!(rm_gaps::<Dms>(a.clone()), *l, "sanity check sol_2");
-            assert_eq!(rm_gaps::<Dms>(b.clone()), *r, "sanity check sol_2");
+            assert_eq!(rm_gaps::<Dms>(a.clone()), *l, "some letters 🍪 got eaten in sol_2");
+            assert_eq!(rm_gaps::<Dms>(b.clone()), *r, "some letters 🍪 got eaten in sol_2");
             Align(a, b)
         }, |l: &Vec<Dna>, r: &Vec<Dna>| -> Align<Dms> {
             let Align::<Dms>(a, b) = super::sol_1(l, r);
-            assert_eq!(rm_gaps::<Dms>(a.clone()), *l, "sanity check sol_1");
-            assert_eq!(rm_gaps::<Dms>(b.clone()), *r, "sanity check sol_1");
+            assert_eq!(rm_gaps::<Dms>(a.clone()), *l, "some letters 🍪 got eaten in sol_1");
+            assert_eq!(rm_gaps::<Dms>(b.clone()), *r, "some letters 🍪 got eaten in sol_1");
             Align(a, b)
         }, |a, b| {
             let l = super::cout_align::<Dms>(a.0.as_slice(), a.1.as_slice());
             let r = super::cout_align::<Dms>(b.0.as_slice(), b.1.as_slice());
-            if l != r { println!("cost mismatch! {} != {}", l, r); }
             l == r
         }, "sol_2")
     }
 
     #[test]
     fn prog_dyn_dna(){
-        // TODO: write better tests here
-        let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
-        let filenames = &[
-            "Inst_0000010_44.adn",
-            "Inst_0000010_7.adn",
-        ];
-
-        let testcases = filenames
-            .iter()
-            .map(|p| gdata.clone() + "/" + p)
-            .map(|p| read_to_string(p).expect("cannot read file!"))
-            .map(|s| s.parse::<DnaBlock>().expect("cannot parse file: {}"));
-
-        for DnaBlock(l, r) in testcases {
-            let (d, al) = prog_dyn::<Dms>(&l, &r);
-            println!("distance is {} and the optimal alignement is: {}", d, al);
-        }
+        // tests for prog_dyn are not needed since we already test sol_1 and dist_dp_full in other tests.
     }
 }

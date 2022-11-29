@@ -2,7 +2,7 @@
 use std::time::{Duration, Instant};
 use chrono::prelude::Local;
 use runa::{math::*, dna::*, dna::DnaMetricSpace as Dms};
-use runa::io::read_test_data;
+use runa::io::read_test_insts_by_size;
 use std::env;
 
 type DistFunc = fn(&[Dna], &[Dna]) -> <Dms as MetricSpace>::Cost;
@@ -28,7 +28,7 @@ where F: FnOnce()
 fn lapse_sequence<'a, F>(name: &'a str, f: F) -> impl Iterator<Item=(Duration, usize)> + 'a
 where F: Fn(DnaBlock) + 'a
 {
-    let blocks = read_test_data();
+    let blocks = read_test_insts_by_size();
     
     blocks
         .map(move |(size, dna)| (lapse(|| f(dna)), size)) // measure execution time

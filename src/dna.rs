@@ -94,22 +94,14 @@ impl FromStr for DnaBlock {
 
 #[cfg(test)]
 mod tests{
-    use std::fs::read_to_string;
-    use std::env;
+    use crate::io::read_test_inst;
 
     use super::Dna::*;
     use super::DnaBlock;
 
     #[test]
     fn read_double_dna_block(){
-        let x = 
-            read_to_string(
-                env::var("GENOME_DATA")
-                .expect("GENOME_DATA environnement variable cannot be found!") 
-                + "/Inst_0000010_44.adn")
-            .expect("cannot open file!")
-            .parse::<DnaBlock>()
-            .expect("cannot parse file!");
+        let x = read_test_inst("Inst_0000010_44.adn").expect("the reader cannot read the file!");
         assert_eq!(x, DnaBlock(vec![T, A, T, A, T, G, A ,G ,T, C], vec![T, A, T, T, T]), "the reader is not correct!")
     }
 }

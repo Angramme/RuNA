@@ -1,70 +1,118 @@
-use std::{path::Path, fs::File};
-use std::io::{BufReader, BufRead};
 use crate::dna::DnaBlock;
 use std::error::Error;
 use std::fs::read_to_string;
 use std::env;
 
-/// An iterator type that reads a file lazily and gives dna blocks contained inside.
-pub struct DnaBlocks{
-    reader: Box<dyn BufRead>,
-}
 
-impl DnaBlocks {
-    pub fn new(rd: Box<dyn BufRead>) -> Self {
-        DnaBlocks{reader: rd}
-    }
-}
-impl DnaBlocks {
-    pub fn from_file(f: File) -> Self {
-        let reader = Box::from(BufReader::new(f));
-        Self::new(reader)
-    }
-    pub fn from_path<P>(path: P) -> std::io::Result<Self>
-    where P: AsRef<Path>, 
-    {
-        let f = File::open(path)?;
-        Ok(Self::from_file(f))
-    }
-}
 
-impl Iterator for DnaBlocks {
-    type Item = Result<DnaBlock, Box<dyn Error>>;
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut buf = String::new();
-        for _ in 0..4 { 
-            if let Err(er) = self.reader.read_line(&mut buf) { 
-                return Some(Err(Box::new(er))) 
-            } 
-        }
-        if buf.is_empty() {
-            None
-        } else {
-            Some(buf.as_str().parse::<DnaBlock>())
-        }
-    }
-}
-
-pub fn read_test_data<'a>() -> impl Iterator<Item = (usize, DnaBlock)> + 'a
+pub fn read_test_inst_of_size(size: usize) -> Result<DnaBlock, Box<dyn Error>>
 {
-    // let sizes = {
-    //     let sizes1 = [10, 12, 13, 14, 20, 50, 100, 500].into_iter();
-    //     let sizes2 = (3..=5).map(|i| usize::pow(10, i));
-    //     sizes1.chain(sizes2)
-    // };
+    let secsizes = [7, 8, 13, 45, 32, 56, 89, 76, 77, 3, 20, 6];
+    let gdata = env::var("GENOME_DATA")?;
+    secsizes
+        .into_iter()
+        .map(|size2| format!("{}/Inst_{:07}_{}.adn", gdata, size, size2))
+        .map(read_to_string) // try opening the file
+        .find_map(|x| x.ok()) // open first existing file
+        .ok_or("couldn't read file")? 
+        .parse::<DnaBlock>()
+}
+
+pub fn read_test_inst(filename: &str) -> Result<DnaBlock, Box<dyn Error>>
+{
+    let gdata = env::var("GENOME_DATA")?;
+    let f = gdata + "/" + filename;
+    let f = read_to_string(f)?;
+    f.parse::<DnaBlock>()
+}
+
+pub fn read_test_insts_all<'a>() -> impl Iterator<Item = (usize, DnaBlock)> + 'a
+{
+    let filenames = [        
+        "Inst_0000010_44.adn",
+        "Inst_0000010_7.adn",
+        "Inst_0000010_8.adn",
+        "Inst_0000012_13.adn",
+        "Inst_0000012_32.adn",
+        "Inst_0000012_56.adn",
+        "Inst_0000013_45.adn",
+        "Inst_0000013_56.adn",
+        "Inst_0000013_89.adn",
+        "Inst_0000014_23.adn",
+        "Inst_0000014_7.adn",
+        "Inst_0000014_83.adn",
+        "Inst_0000015_2.adn",
+        "Inst_0000015_4.adn",
+        "Inst_0000015_76.adn",
+        "Inst_0000020_17.adn",
+        "Inst_0000020_32.adn",
+        "Inst_0000020_8.adn",
+        "Inst_0000050_3.adn",
+        "Inst_0000050_77.adn",
+        "Inst_0000050_9.adn",
+        "Inst_0000100_3.adn",
+        "Inst_0000100_44.adn",
+        "Inst_0000100_7.adn",
+        "Inst_0000500_3.adn",
+        "Inst_0000500_8.adn",
+        "Inst_0000500_88.adn",
+        "Inst_0001000_2.adn",
+        "Inst_0001000_23.adn",
+        "Inst_0001000_7.adn",
+        "Inst_0002000_3.adn",
+        "Inst_0002000_44.adn",
+        "Inst_0002000_8.adn",
+        "Inst_0003000_1.adn",
+        "Inst_0003000_10.adn",
+        "Inst_0003000_25.adn",
+        "Inst_0003000_45.adn",
+        "Inst_0005000_32.adn",
+        "Inst_0005000_33.adn",
+        "Inst_0005000_4.adn",
+        "Inst_0008000_32.adn",
+        "Inst_0008000_54.adn",
+        "Inst_0008000_98.adn",
+        "Inst_0010000_50.adn",
+        "Inst_0010000_7.adn",
+        "Inst_0010000_8.adn",
+        "Inst_0015000_20.adn",
+        "Inst_0015000_3.adn",
+        "Inst_0015000_30.adn",
+        "Inst_0020000_5.adn",
+        "Inst_0020000_64.adn",
+        "Inst_0020000_77.adn",
+        "Inst_0050000_6.adn",
+        "Inst_0050000_63.adn",
+        "Inst_0050000_88.adn",
+        "Inst_0100000_11.adn",
+        "Inst_0100000_3.adn",
+        "Inst_0100000_76.adn",
+        ];
+
+    let sizes = filenames
+        .into_iter()
+        .map(|s| s
+            .split('_')
+            .nth(1)
+            .expect("invalid filename!")
+            .parse::<usize>()
+            .expect("invalid filename!"));
+
+    let blocks = filenames
+        .into_iter()
+        .map(read_test_inst)
+        .map(|e| e.expect("cannot parse file!"));
+
+    sizes.zip(blocks)
+}
+
+pub fn read_test_insts_by_size<'a>() -> impl Iterator<Item = (usize, DnaBlock)> + 'a
+{
     let sizes = [10, 12, 13, 14, 20, 50, 100, 500, 1000, 2000, 3000, 5000, 8000, 10000, 15000, 20000, 50000, 100000].into_iter();
-    let secsizes = [7, 8, 13, 45, 32, 56, 89, 76, 77, 3, 20, 6]; // this is here because the endings of files differ for different sizes
-    let gdata = env::var("GENOME_DATA").expect("GENOME_DATA environnement variable cannot be found!");
 
     let blocks = sizes.clone()
-        .map(move |size| secsizes
-            .into_iter()
-            .map(|size2| format!("{}/Inst_{:07}_{}.adn", gdata, size, size2))
-            .map(read_to_string) // try opening the file
-            .find_map(|x| x.ok()) // open first existing file
-            .expect("cannot open file!")
-        )
-        .map(|str| str.parse::<DnaBlock>().expect("cannot parse file!"));
+        .map(read_test_inst_of_size)
+        .map(|str| str.expect("cannot parse file!"));
 
     sizes.zip(blocks)
 }
@@ -72,19 +120,11 @@ pub fn read_test_data<'a>() -> impl Iterator<Item = (usize, DnaBlock)> + 'a
 #[cfg(test)]
 mod tests{
     use crate::dna::Dna::*;
-    use super::DnaBlock;
-    use std::env;
-
-    use super::DnaBlocks;
+    use super::{DnaBlock, read_test_inst};
 
     #[test]
     fn read_double_dna_block(){
-        let path = env::var("GENOME_DATA")
-            .expect("GENOME_DATA environnement variable cannot be found!") 
-            + "/Inst_0000010_44.adn";
-
-        let mut bl = DnaBlocks::from_path(path).expect("cannot read file");
-        let x = bl.next().expect("bad reading: file is not empty!");
+        let x = read_test_inst("Inst_0000010_44.adn");
         match x {
             Err(x) => panic!("bad read, error: {}", x),
             Ok(x) => 
