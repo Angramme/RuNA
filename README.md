@@ -41,6 +41,9 @@ s/mem_use-67d566998f108632 dist_2
 ```
 
 You can use all other standard cargo commands, for example to generate documentation or others.
+You can find all the performance tests in benches/, all the memory tests in tests/ and all the unit-tests 
+at the bottom of the corresponding files. 
+
 
 
 ## Questions

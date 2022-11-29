@@ -30,7 +30,8 @@ fn main_prog_dyn(){
 
 fn main_dist_2(){
     let block = read_test_inst("Inst_0010000_7.adn").expect("cannot read block!");
-    dist_2::<Dms>(&block.0, &block.1);
+    let res = dist_2::<Dms>(&block.0, &block.1);
+    println!("{}", res);
 }
 
 fn main_sol_2(){
