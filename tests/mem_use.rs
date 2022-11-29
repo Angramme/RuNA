@@ -5,7 +5,7 @@ use runa::{dna::{DnaMetricSpace as Dms}, math::*, io::read_test_inst};
 
 
 fn main_dist_naif(){
-    let block = read_test_inst("Inst_0000013_45.adn").expect("cannot read block!");
+    let block = read_test_inst("Inst_0000014_83.adn").expect("cannot read block!");
     let res = dist_naif::<Dms>(&block.0, &block.1);
     println!("{}", res);
 }
@@ -29,15 +29,20 @@ fn main_prog_dyn(){
 }
 
 fn main_dist_2(){
-    let block = read_test_inst("Inst_0010000_7.adn").expect("cannot read block!");
+    let fnm = "Inst_0020000_64.adn";
+    // let fnm = "Inst_0000100_3.adn";
+    let block = read_test_inst(fnm).expect("cannot read block!");
+    println!("running with {}", fnm);
     let res = dist_2::<Dms>(&block.0, &block.1);
     println!("{}", res);
 }
 
 fn main_sol_2(){
-    // TODO
-    // let block = read_test_inst("Inst_0000013_45.adn").expect("cannot read block!");
-    // dist_naif::<Dms>(&block.0, &block.1);
+    let fnm = "Inst_0020000_64.adn";
+    let block = read_test_inst(fnm).expect("cannot read block!");
+    println!("running with {}", fnm);
+    let res = sol_2::<Dms>(&block.0, &block.1);
+    println!("{}", res);
 }
 
 
