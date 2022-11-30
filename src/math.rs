@@ -318,6 +318,7 @@ mod tests {
 
     use super::MetricSpace;
     use super::dist_2;
+    use super::sol_2;
     use super::{Align, cout_align};
 
     fn test_dist_3<F>(f: F, name: &str) // manual tests
@@ -470,6 +471,12 @@ mod tests {
     fn bonus_q30(){
         let DnaBlock(x, y) = read_test_inst("Instance_long_short.adn").expect("cannot read data");
         let d = dist_2::<Dms>(x.as_slice(), y.as_slice());
-        assert_eq!(d, (x.len()-y.len()) as u64 *Dms::DEL)
+        let al = sol_2::<Dms>(x.as_slice(), y.as_slice());
+        let d2 = cout_align::<Dms>(al.0.as_slice(), al.1.as_slice());
+
+        let ref_d = (x.len()-y.len()) as u64 *Dms::DEL;
+
+        assert_eq!(d, ref_d);
+        assert_eq!(d2, ref_d);
     }
 }
