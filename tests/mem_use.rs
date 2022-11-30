@@ -55,7 +55,13 @@ fn main(){
         ("sol_1", main_sol_1),
         ("sol_2", main_sol_2),
     ];
-    let arg = env::args().nth(1).expect("an argument is required!"); 
+    let arg = env::args().nth(1);
+    
+    if arg == None {
+        println!("an argument is required!");
+        return;
+    }
+    let arg = arg.unwrap();
 
     let f = funcs.into_iter().find(|&(n, _)| n == arg).map(|(_, b)| b);
     
