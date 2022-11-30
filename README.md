@@ -10,7 +10,15 @@
 
 ## Docs 
 
-TODO: link to docs
+```
+https://angramme.github.io/RuNA/
+```
+
+You can also run
+```
+cargo doc --open
+```
+This will generate and open the docs on you local machine.
 
 ## Commands 
 
