@@ -57,3 +57,5 @@ at the bottom of the corresponding files.
 ## Questions
 
 [overleaf](https://www.overleaf.com/project/632486670475fd12235d011c)
+
+Alternatively, the pdf is attached in the project.
