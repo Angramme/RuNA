@@ -1,7 +1,9 @@
 [package]
 name = "RuNA"
+description = "RuNA is a library for aligning DNA sequences. "
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 authors = ["Kacper Ozieblowski", "Rodrigue Tavernier"]
 
 [lib]
