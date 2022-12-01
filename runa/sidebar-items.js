@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["dna","The crate containing information specific to Dna sequences, and the DNA metric space"],["io","Input/Output library of the crate."],["math","The Math crate of the project"]]};

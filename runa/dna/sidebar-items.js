@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Dna","Dna element, an item in a dna sequence"]],"struct":[["DnaBlock","Data structure representing a pair of Dna’s"],["DnaMetricSpace","Metric space defined for dna sequences, it is defined as mentioned in the assignement"]]};

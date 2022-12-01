@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"runa":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.65.0/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"runa/dna/enum.Dna.html\" title=\"enum runa::dna::Dna\">Dna</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.65.0/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"struct\" href=\"runa/dna/struct.DnaBlock.html\" title=\"struct runa::dna::DnaBlock\">DnaBlock</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
