@@ -31,7 +31,7 @@ impl std::str::FromStr for Dna {
             "T" | "t" => Ok(Self::T),
             "G" | "g" => Ok(Self::G),
             "-" | "_" => Ok(Self::Gap),
-            x => bail!(&format!("invalid string passed \"{}\"", x)[..]),
+            x => bail!(&format!("DNA element error: invalid string passed \"{}\"", x)[..]),
         }
     }
 }
